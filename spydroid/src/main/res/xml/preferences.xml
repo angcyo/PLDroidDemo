@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/settings3" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="stream_audio"
+            android:summary="@string/settings4"
+            android:title="@string/settings3" />
+
+        <ListPreference
+            android:entries="@array/audioEncoderArray"
+            android:entryValues="@array/audioEncoderValues"
+            android:key="audio_encoder"
+            android:summary="@string/settings6"
+            android:title="@string/settings5" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="@string/settings7">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="stream_video"
+            android:summary="@string/settings8"
+            android:title="@string/settings7" />
+
+        <ListPreference
+            android:entries="@array/videoEncoderArray"
+            android:entryValues="@array/videoEncoderValues"
+            android:key="video_encoder"
+            android:summary="@string/settings10"
+            android:title="@string/settings9" />
+        <ListPreference
+            android:entries="@array/videoResolutionArray"
+            android:entryValues="@array/videoResolutionArray"
+            android:key="video_resolution"
+            android:title="@string/settings11" />
+        <ListPreference
+            android:entries="@array/videoFramerateArray"
+            android:entryValues="@array/videoFramerateValues"
+            android:key="video_framerate"
+            android:title="@string/settings12" />
+        <ListPreference
+            android:entries="@array/videoBitrateArray"
+            android:entryValues="@array/videoBitrateValues"
+            android:key="video_bitrate"
+            android:title="@string/settings13" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="@string/settings19" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="http_server_enabled"
+            android:summary="@string/settings23"
+            android:title="@string/settings22" />
+        <!-- <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="use_https"
+            android:summary="@string/settings25"
+            android:title="@string/settings24" /> -->      
+        <EditTextPreference
+            android:defaultValue="8080"
+            android:inputType="number"
+            android:key="http_port"
+            android:summary="@string/settings21"
+            android:title="@string/settings20" />
+        <!-- <EditTextPreference
+            android:defaultValue="8443"
+            android:inputType="number"
+            android:key="https_port"
+            android:summary="@string/settings27"
+            android:title="@string/settings26" /> -->
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="@string/settings28" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="rtsp_enabled"
+            android:summary="@string/settings30"
+            android:title="@string/settings29" />              
+        <EditTextPreference
+            android:defaultValue="8086"
+            android:inputType="number"
+            android:key="rtsp_port"
+            android:summary="@string/settings32"
+            android:title="@string/settings31" />      
+    </PreferenceCategory>    
+    
+    <PreferenceCategory android:title="@string/settings14" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="notification_enabled"
+            android:summary="@string/settings16"
+            android:title="@string/settings15" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

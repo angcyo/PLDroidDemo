@@ -1,0 +1,3 @@
+include ':app', ':drivevideo',  ':yuvtorbga'
+//include ':spydroid'':gpuimage-library',
+include ':androidH264StreamDemo'
