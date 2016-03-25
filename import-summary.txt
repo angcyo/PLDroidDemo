@@ -1,65 +1,15 @@
 ECLIPSE ANDROID PROJECT IMPORT SUMMARY
 ======================================
 
-Ignored Files:
---------------
-The following files were *not* copied into the new Gradle project; you
-should evaluate whether these are still needed in your project and if
-so manually move them:
-
-* .gitattributes
-* .gitignore
-* ic_launcher-web.png
-* proguard-project.txt
-
-Replaced Jars with Dependencies:
---------------------------------
-The importer recognized the following .jar files as third party
-libraries and replaced them with Gradle dependencies instead. This has
-the advantage that more explicit version information is known, and the
-libraries can be updated automatically. However, it is possible that
-the .jar file in your project was of an older version than the
-dependency we picked, which could render the project not compileable.
-You can disable the jar replacement in the import wizard and try again:
-
-android-support-v4.jar => com.android.support:support-v4:22.+
-
-Replaced Libraries with Dependencies:
--------------------------------------
-The importer recognized the following library projects as third party
-libraries and replaced them with Gradle dependencies instead. This has
-the advantage that more explicit version information is known, and the
-libraries can be updated automatically. However, it is possible that
-the source files in your project were of an older version than the
-dependency we picked, which could render the project not compileable.
-You can disable the library replacement in the import wizard and try
-again:
-
-appcompat-v7 => [com.android.support:appcompat-v7:22.+]
-
 Moved Files:
 ------------
 Android Gradle projects use a different directory structure than ADT
 Eclipse projects. Here's how the projects were restructured:
 
-* AndroidManifest.xml => x264encoder\src\main\AndroidManifest.xml
-* libs\armeabi\libx264encoder.so => x264encoder\src\main\jniLibs\armeabi\libx264encoder.so
-* res\ => x264encoder\src\main\res\
-* src\ => x264encoder\src\main\java\
-
-Missing Android Support Repository:
------------------------------------
-Some useful libraries, such as the Android Support Library, are
-installed from a special Maven repository, which should be installed
-via the SDK manager.
-
-It looks like this library is missing from your SDK installation at:
-null
-
-To install it, open the SDK manager, and in the Extras category,
-select "Android Support Repository". You may also want to install the
-"Google Repository" if you want to use libraries like Google Play
-Services.
+* AndroidManifest.xml => androidFFmpegX264\src\main\AndroidManifest.xml
+* jni\ => androidFFmpegX264\src\main\jni\
+* res\ => androidFFmpegX264\src\main\res\
+* src\ => androidFFmpegX264\src\main\java\
 
 Next Steps:
 -----------

@@ -29,9 +29,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
     private SurfaceHolder surfaceHolder;
     private Camera camera;
     private Parameters parameters;
-    private int width = 640;
-    private int height = 480;
-    private int fps = 20;
+    private int width = 1280;
+    private int height = 720;
+    private int fps = 25;
     private int bitrate = 90000;
     private int timespan = 90000 / fps;
     private long time;
@@ -132,6 +132,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
                 parameters = mCamera.getParameters();
                 parameters.setPreviewFormat(ImageFormat.NV21);
                 parameters.setPreviewSize(width, height);
+                parameters.setFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
                 mCamera.setParameters(parameters);
                 mCamera.setPreviewDisplay(surfaceHolder);
                 mCamera.startPreview();
