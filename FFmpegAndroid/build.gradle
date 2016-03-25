@@ -1,0 +1,25 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 23
+        versionCode 29
+        versionName "0.2.5.9"
+    }
+
+    sourceSets.main {
+        assets.srcDirs = ['assets']
+        jni.srcDirs = [] //disable automatic ndk-build
+        jniLibs.srcDirs = ['libs']
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+// apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
