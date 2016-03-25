@@ -20,6 +20,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -52,7 +53,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
     private final static int DEFAULT_BIT_RATE = 500000;
 
     public static boolean isSend = false;
-
+    protected Object lock = new Object();
     Camera camera;
     SurfaceHolder previewHolder;
     byte[] previewBuffer;
@@ -63,7 +64,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
     int port;
     ArrayList<byte[]> encDataList = new ArrayList<byte[]>();
     ArrayList<Integer> encDataLengthList = new ArrayList<Integer>();
-
     Runnable senderRun = new Runnable() {
         @Override
         public void run() {
@@ -97,12 +97,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
             //TODO:
         }
     };
+    SaveFileThread saveFileThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.setContentView(R.layout.activity_main);
+
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         isSend = false;
 
@@ -182,18 +186,28 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
             }
 
             byte[] encData = this.encoder.offerEncoder(data);
+            byte[] src;
+//            synchronized (lock) {
+//                src = new byte[encData.length - 4];
+//                System.arraycopy(encData, 4, src, 0, src.length);
+//            }
+
             if (encData.length > 0 && !isSend) {
                 synchronized (this.encDataList) {
+
+//                    this.encDataList.add(src);
+
                     this.encDataList.add(encData);
 
 //                    isSend = true;
-
-                    if (isSend) {
-                        SaveFileThread saveFileThread = new SaveFileThread();
-                        saveFileThread.saveData(encData, encData.length);
-                        saveFileThread.start();
+//                    if (isSend) {
+                        if (saveFileThread == null) {
+                            saveFileThread = new SaveFileThread();
+                            saveFileThread.start();
+                        }
+                        saveFileThread.saveData(encData);
                     }
-                }
+//                }
             }
         }
     }
@@ -285,6 +299,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
             camera = Camera.open();
             camera.setPreviewDisplay(this.previewHolder);
             Camera.Parameters params = camera.getParameters();
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+
             params.setPreviewSize(width, height);
             params.setPreviewFormat(ImageFormat.YV12);
             camera.setParameters(params);
@@ -380,36 +396,35 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, Pr
     class SaveFileThread extends Thread {
         private Vector<byte[]> saveData;
         private volatile int length;
-        private boolean isExit = false;
 
         public SaveFileThread() {
             this.saveData = new Vector<>();
         }
 
         private String getSaveFileName() {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH-mm-ss-SSS");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH-mm-ss-SSS");
             String format = simpleDateFormat.format(new Date());
             return format;
 //            return (format + ".png");
         }
 
-        public void saveData(byte[] data, int len) {
+        public void saveData(byte[] data) {
             saveData.add(data);
-            length = len;
         }
 
         @Override
         public void run() {
-            while (!isExit) {
+            while (isStreaming) {
                 if (!saveData.isEmpty()) {
                     byte[] data = saveData.remove(0);
                     try {
                         File fileName = new File(getExternalCacheDir() + File.separator + getSaveFileName());
-                        FileOutputStream outputStream = new FileOutputStream(fileName);
+                        FileOutputStream outputStream = new FileOutputStream(fileName, true);
 
-                        outputStream.write(data, 0, length);
+                        outputStream.write(data, 0, data.length);
                         outputStream.close();
-                        Log.e("保存至:-->", fileName.getAbsolutePath());
+                        Log.e(getId() + " 保存至:-->" + data.length, fileName.getAbsolutePath());
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     } catch (IOException e) {

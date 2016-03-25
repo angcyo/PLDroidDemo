@@ -10,26 +10,28 @@ so manually move them:
 * ic_launcher-web.png
 * proguard-project.txt
 
-Replaced Jars with Dependencies:
---------------------------------
-The importer recognized the following .jar files as third party
+Replaced Libraries with Dependencies:
+-------------------------------------
+The importer recognized the following library projects as third party
 libraries and replaced them with Gradle dependencies instead. This has
 the advantage that more explicit version information is known, and the
 libraries can be updated automatically. However, it is possible that
-the .jar file in your project was of an older version than the
+the source files in your project were of an older version than the
 dependency we picked, which could render the project not compileable.
-You can disable the jar replacement in the import wizard and try again:
+You can disable the library replacement in the import wizard and try
+again:
 
-android-support-v4.jar => com.android.support:support-v4:21.+
+appcompat-v7 => [com.android.support:appcompat-v7:20.+]
 
 Moved Files:
 ------------
 Android Gradle projects use a different directory structure than ADT
 Eclipse projects. Here's how the projects were restructured:
 
-* AndroidManifest.xml => androidH264StreamDemo\src\main\AndroidManifest.xml
-* res\ => androidH264StreamDemo\src\main\res\
-* src\ => androidH264StreamDemo\src\main\java\
+* AndroidManifest.xml => h264MediaCodecStreamer\src\main\AndroidManifest.xml
+* lint.xml => h264MediaCodecStreamer\lint.xml
+* res\ => h264MediaCodecStreamer\src\main\res\
+* src\ => h264MediaCodecStreamer\src\main\java\
 
 Missing Android Support Repository:
 -----------------------------------

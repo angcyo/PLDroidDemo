@@ -1,5 +1,6 @@
 package com.angcyo.pldroiddemo;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -14,12 +15,6 @@ import org.wysaid.view.CameraRecordGLSurfaceView;
 
 public class Main2Activity extends AppCompatActivity {
 
-    CameraRecordGLSurfaceView cameraView;
-    ImageView imageView;
-    Bitmap bitmap;
-
-    static String TAG = "Main2Activity";
-
     public static final String effectConfigs[] = {
             "",
             "@beautify bilateral 10 4 1 @style haze -0.5 -0.5 1 1 1 @curve RGB(0, 0)(94, 20)(160, 168)(255, 255) @curve R(0, 0)(129, 119)(255, 255)B(0, 0)(135, 151)(255, 255)RGB(0, 0)(146, 116)(255, 255)",
@@ -28,9 +23,16 @@ public class Main2Activity extends AppCompatActivity {
             "#unpack @dynamic wave 1", //可调节速度
             "@dynamic wave 0.5",       //可调节混合
     };
+    static String TAG = "Main2Activity";
+    CameraRecordGLSurfaceView cameraView;
+    ImageView imageView;
+    Bitmap bitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        Log.e("Main2Activity", savedInstanceState == null ? "null" : "onCreate");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
@@ -68,6 +70,15 @@ public class Main2Activity extends AppCompatActivity {
                 imageView.setImageBitmap(bitmap);
             }
         });
+
+        getSupportFragmentManager().beginTransaction().commit();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        Log.e("onNewIntent", intent == null ? "null" : "onNewIntent");
     }
 
     @Override
