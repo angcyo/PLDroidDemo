@@ -1,15 +1,29 @@
 ECLIPSE ANDROID PROJECT IMPORT SUMMARY
 ======================================
 
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .gitignore
+* README.md
+* ic_launcher-web.png
+
 Moved Files:
 ------------
 Android Gradle projects use a different directory structure than ADT
 Eclipse projects. Here's how the projects were restructured:
 
-* AndroidManifest.xml => androidFFmpegX264\src\main\AndroidManifest.xml
-* jni\ => androidFFmpegX264\src\main\jni\
-* res\ => androidFFmpegX264\src\main\res\
-* src\ => androidFFmpegX264\src\main\java\
+* AndroidManifest.xml => LivePublisher\src\main\AndroidManifest.xml
+* libs\arm64-v8a\libPusher.so => LivePublisher\src\main\jniLibs\arm64-v8a\libPusher.so
+* libs\armeabi-v7a\libPusher.so => LivePublisher\src\main\jniLibs\armeabi-v7a\libPusher.so
+* libs\armeabi\libPusher.so => LivePublisher\src\main\jniLibs\armeabi\libPusher.so
+* libs\x86\libPusher.so => LivePublisher\src\main\jniLibs\x86\libPusher.so
+* libs\x86_64\libPusher.so => LivePublisher\src\main\jniLibs\x86_64\libPusher.so
+* res\ => LivePublisher\src\main\res\
+* src\ => LivePublisher\src\main\java\
 
 Next Steps:
 -----------
