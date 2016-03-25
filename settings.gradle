@@ -2,3 +2,4 @@ include ':app', ':drivevideo',  ':yuvtorbga'
 //include ':spydroid'':gpuimage-library',
 include ':androidH264StreamDemo'
 include ':h264MediaCodecStreamer'
+include ':mediaCodecDemo'

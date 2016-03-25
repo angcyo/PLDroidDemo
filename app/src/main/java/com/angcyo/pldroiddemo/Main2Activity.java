@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ImageView;
@@ -71,7 +72,9 @@ public class Main2Activity extends AppCompatActivity {
             }
         });
 
-        getSupportFragmentManager().beginTransaction().commit();
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+//        fragmentTransaction.show(null);
+        fragmentTransaction.commit();
     }
 
     @Override
