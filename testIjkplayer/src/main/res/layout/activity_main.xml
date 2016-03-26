@@ -1,0 +1,92 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.testijkplayer.MainActivity"
+    android:background="#FFA500"
+    android:orientation="vertical" >
+
+    <TextView 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="请输入视频地址"
+        android:textColor="#ff0000"/>
+    <EditText 
+        android:id="@+id/id_main_etvideo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lines="2"/>
+    
+     <RelativeLayout 
+         android:id="@+id/id_main_demoplay"
+	        android:layout_width="match_parent"
+	        android:layout_height="60dip"
+	        android:gravity="center_vertical"
+	        android:background="#FFFFFF"
+	        android:layout_marginTop="20dip"
+	         >
+	         <TextView 
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_centerVertical="true"
+		        android:layout_marginLeft="10dip"
+		        android:text="演示视频播放(参考功能)"
+		        android:textStyle="bold"
+		        android:textSize="18dip"/>
+			        <TextView 
+			            android:layout_width="wrap_content"
+			            android:layout_height="wrap_content"
+		       		 android:layout_centerVertical="true"
+			        android:layout_alignParentRight="true"
+		    	    android:layout_marginRight="20dip"
+			            android:background="@drawable/right_arrow"/> 
+	</RelativeLayout>
+	
+    <RelativeLayout 
+         android:id="@+id/id_main_demoedit"
+	        android:layout_width="match_parent"
+	        android:layout_height="60dip"
+	        android:gravity="center_vertical"
+	        android:background="#FFFFFF"
+	        android:layout_marginTop="20dip"
+	         >
+	         <TextView 
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_centerVertical="true"
+		        android:layout_marginLeft="10dip"
+		        android:text="演示视频编辑(核心功能)"
+		        android:textStyle="bold"
+		        android:textSize="18dip"/>
+	
+			        <TextView 
+			            android:layout_width="wrap_content"
+			            android:layout_height="wrap_content"
+		       		 android:layout_centerVertical="true"
+			        android:layout_alignParentRight="true"
+		    	    android:layout_marginRight="20dip"
+			            android:background="@drawable/right_arrow"/> 
+	</RelativeLayout>
+	
+    <RelativeLayout 
+	        android:layout_width="match_parent"
+	        android:layout_height="150dip"
+	        android:gravity="center_vertical"
+	        android:background="#FFFFFF"
+	        android:layout_marginTop="20dip"
+	         >
+	         <TextView 
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_centerVertical="true"
+		        android:layout_marginLeft="10dip"
+		        android:text="本SDK在ffmpeg基础上增加了硬解解码加速和硬件编码加速.以视频编辑处理为主,播放为参考功能,兼容完整的ffmpeg视频处理功能.\n欢迎使用,欢迎联系我们\n\n定制和技术支持,QQ1852600324 \n email:support@lansongtech.com"
+		        android:textColor="#0000ff"/>
+			      
+	</RelativeLayout>
+
+</LinearLayout>

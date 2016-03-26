@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" 
+    android:background="#009900">
+    
+    <Button 
+        android:id="@+id/id_video_edit_btn"
+        android:layout_width="match_parent"
+        android:layout_margin="20dip"
+        android:layout_height="wrap_content"
+        android:text="开始测试"
+        android:background="#FFFF00"
+        android:layout_centerInParent="true"/>
+
+    
+    <TextView 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dip"
+        android:text="此演示功能是:解码-->把画面转黑白-->编码输出,保存在/sdcard/video_demo_gray.mp4中. \n\n,您可以向executeVideoEditor()这个方法中填写任何的ffmpeg命令字符串.或者询问我们来实现您的视频效果.\n\nQQ1852600324"/>
+    
+</RelativeLayout>
