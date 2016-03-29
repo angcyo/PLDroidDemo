@@ -1,4 +1,4 @@
-include ':app', ':drivevideo', ':yuvtorbga'
+include ':app', ':drivevideo', ':yuvtorbga', ':driveblurdemo'
 //include ':spydroid'':gpuimage-library',
 include ':androidH264StreamDemo'
 include ':h264MediaCodecStreamer'
@@ -12,3 +12,6 @@ include ':mediaCodecPublisher'
 //include ':h264Stream'
 include ':testIjkplayer'
 include ':mediaCodecEncode'
+include ':cameraPreview'
+//include ':pull_refresh'
+//include ':_qlibrary'

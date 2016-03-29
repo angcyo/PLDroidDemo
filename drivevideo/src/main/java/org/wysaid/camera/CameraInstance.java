@@ -1,5 +1,6 @@
 package org.wysaid.camera;
 
+import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -25,20 +26,19 @@ public class CameraInstance {
     public static final String LOG_TAG = Common.LOG_TAG;
     public static final int DEFAULT_PREVIEW_RATE = 30;
     private static final String ASSERT_MSG = "检测到CameraDevice 为 null! 请检查";
+    public static int mPictureWidth = 1920;
+    public static int mPictureHeight = 480;
+    public static int mPreferPreviewWidth = 1920;
+    public static int mPreferPreviewHeight = 480;
     private static CameraInstance mThisInstance;
+    Camera.PreviewCallback previewCallback;
     private Camera mCameraDevice;
     private Camera.Parameters mParams;
     private boolean mIsPreviewing = false;
     private int mDefaultCameraID = -1;
     private int mPreviewWidth;
     private int mPreviewHeight;
-
-    private int mPictureWidth = 1920;
-    private int mPictureHeight = 480;
-
-    private int mPreferPreviewWidth = 1920;
-    private int mPreferPreviewHeight = 480;
-
+    private byte[] mImageCallbackBuffer;
     private int mFacing = 0;
     //保证从大到小排列
     private Comparator<Camera.Size> comparatorBigger = new Comparator<Camera.Size>() {
@@ -236,6 +236,12 @@ public class CameraInstance {
 
         mParams.setPictureFormat(PixelFormat.JPEG);
 
+        //robi
+        mParams.setPreviewFormat(ImageFormat.NV21);
+        mParams.setFlashMode("off");
+        mParams.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
+        mParams.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
+
         List<Camera.Size> picSizes = mParams.getSupportedPictureSizes();
         Camera.Size picSz = null;
 
@@ -285,16 +291,26 @@ public class CameraInstance {
 
         try {
             mCameraDevice.setParameters(mParams);
-
             //robi
-            mCameraDevice.setPreviewCallback(new Camera.PreviewCallback() {
+            mImageCallbackBuffer = new byte[prevSz.width * prevSz.height * 3 / 2];
+            mCameraDevice.addCallbackBuffer(mImageCallbackBuffer);
+            mCameraDevice.setPreviewCallbackWithBuffer(new Camera.PreviewCallback() {
                 @Override
                 public void onPreviewFrame(byte[] data, Camera camera) {
                     if (previewCallback != null) {
                         previewCallback.onPreviewFrame(data, camera);
                     }
+                    mCameraDevice.addCallbackBuffer(data);
                 }
             });
+//            mCameraDevice.setPreviewCallback(new Camera.PreviewCallback() {
+//                @Override
+//                public void onPreviewFrame(byte[] data, Camera camera) {
+//                    if (previewCallback != null) {
+//                        previewCallback.onPreviewFrame(data, camera);
+//                    }
+//                }
+//            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -312,10 +328,8 @@ public class CameraInstance {
         mPictureHeight = szPic.height;
 
 //        Log.i(LOG_TAG, String.format("Camera Picture Size: %d x %d", szPic.width, szPic.height));
-//        Log.i(LOG_TAG, String.format("Camera Preview Size: %d x %d", szPrev.width, szPrev.height));
+        Log.i(LOG_TAG, String.format("Camera Preview Size: %d x %d", szPrev.width, szPrev.height));
     }
-
-    Camera.PreviewCallback previewCallback;
 
     public synchronized void setPreviewCallback(Camera.PreviewCallback callback) {
         this.previewCallback = callback;

@@ -81,6 +81,12 @@ public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.
     RectF mThumnailClipingArea;
     private DriveVideoHandler driveVideoHandler;
 
+    CameraInstance.CameraOpenCallback cameraOpenCallback;
+
+    public void setCameraOpenCallback(CameraInstance.CameraOpenCallback cameraOpenCallback) {
+        this.cameraOpenCallback = cameraOpenCallback;
+    }
+
     public CameraGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         Log.i(LOG_TAG, "MyGLSurfaceView Construct...");
@@ -193,6 +199,10 @@ public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.
                                 Log.i(LOG_TAG, "## switch camera -- start preview...");
                                 cameraInstance().startPreview(mSurfaceTexture);
                                 mFrameRecorder.srcResize(cameraInstance().previewWidth(), cameraInstance().previewHeight());
+
+                                if (cameraOpenCallback != null) {
+                                    cameraOpenCallback.cameraReady();
+                                }
                             }
                         }
                     }, facing);
@@ -530,7 +540,7 @@ public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.
 
             int facing = mIsCameraBackForward ? Camera.CameraInfo.CAMERA_FACING_BACK : Camera.CameraInfo.CAMERA_FACING_FRONT;
 
-            if (!cameraInstance().tryOpenCamera(null, facing)) {
+            if (!cameraInstance().tryOpenCamera(cameraOpenCallback, facing)) {
                 Log.e(LOG_TAG, "相机启动失败!!");
             }
         }
@@ -557,6 +567,10 @@ public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.
                 }
 
                 onResume();
+
+                if (cameraOpenCallback != null) {
+                    cameraOpenCallback.cameraReady();
+                }
             }
         }, facing);
 
@@ -702,6 +716,10 @@ public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.
                 @Override
                 public void cameraReady() {
                     Log.i(LOG_TAG, "tryOpenCamera OK...");
+
+                    if (cameraOpenCallback != null) {
+                        cameraOpenCallback.cameraReady();
+                    }
                 }
             }, facing);
             if (openCameraFlag == false) {

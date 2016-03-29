@@ -1,16 +1,16 @@
 package com.example.mediacodecencode;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.os.Environment;
-import android.util.Log;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 
 
@@ -43,7 +43,7 @@ public class AvcEncoder
 	    mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 	    try {
 			mediaCodec = MediaCodec.createEncoderByType("video/avc");
-		} catch (IOException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -117,8 +117,10 @@ public class AvcEncoder
 					if (input != null) {
 						try {
 							long startMs = System.currentTimeMillis();
+
 							ByteBuffer[] inputBuffers = mediaCodec.getInputBuffers();
 							ByteBuffer[] outputBuffers = mediaCodec.getOutputBuffers();
+
 							int inputBufferIndex = mediaCodec.dequeueInputBuffer(-1);
 							if (inputBufferIndex >= 0) {
 								pts = computePresentationTime(generateIndex);
