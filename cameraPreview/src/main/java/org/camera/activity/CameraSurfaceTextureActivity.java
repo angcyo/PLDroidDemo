@@ -18,9 +18,10 @@ import android.widget.ImageView;
 import com.angcyo.yuvtorbga.GPUImageNativeLibrary;
 import com.example.camerapreview.R;
 
-import org.camera.FastBlur;
+import org.camera.Blur;
 import org.camera.camera.CameraWrapper;
 import org.camera.camera.CameraWrapper.CamOpenOverCallback;
+import org.camera.encode.VideoEncoderFromBuffer;
 import org.camera.preview.CameraTexturePreview;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -173,7 +174,11 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
                         int[] rgb = new int[cw * ch];
 
                         long lastTime = System.currentTimeMillis();
-                        GPUImageNativeLibrary.YUVtoRBGA(bytes, cw, ch, rgb);
+                        byte[] mFrameData = new byte[bytes.length];
+
+                        VideoEncoderFromBuffer.NV21toI420SemiPlanar(bytes, mFrameData, cw, ch);
+                        GPUImageNativeLibrary.YUVtoRBGA(mFrameData, cw, ch, rgb);
+
                         Log.i(TAG, "decodeYUV420SP time:" + (System.currentTimeMillis() - lastTime));
 
                         Bitmap bitmap = Bitmap.createBitmap(rgb, cw, ch, Bitmap.Config.ARGB_8888);
@@ -181,7 +186,8 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
                         int width = cw;
                         int height = ch;
 
-                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? FastBlur.blur(bitmap, width, height) : bitmap));
+//                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? FastBlur.blur(bitmap, width, height) : bitmap));
+                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? Blur.fastblur(CameraSurfaceTextureActivity.this, bitmap, 25) : bitmap));
                     }
                 }
             }

@@ -21,7 +21,7 @@ public class VideoEncoderFromBuffer {
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/Movies/h264";
     // parameters for the encoder
     private static final String MIME_TYPE = "video/avc"; // H.264 Advanced Video
-    private static final int FRAME_RATE = 25; // 15fps
+    private static final int FRAME_RATE = 30; // 15fps
     private static final int IFRAME_INTERVAL = FRAME_RATE; // 10 between
     // I-frames
     private static final int TIMEOUT_USEC = 10000;
@@ -64,8 +64,7 @@ public class VideoEncoderFromBuffer {
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
-        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL,
-                IFRAME_INTERVAL);
+        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
         if (VERBOSE)
             Log.d(TAG, "format: " + mediaFormat);
         try {
@@ -241,7 +240,7 @@ public class VideoEncoderFromBuffer {
      * is a 4:2:0 YUV, For a single I420 pixel: YYYYYYYY UVUV Apply NV21 to
      * I420YUVSemiPlanar(NV12) Refer to https://wiki.videolan.org/YUV/
      */
-    private void NV21toI420SemiPlanar(byte[] nv21bytes, byte[] i420bytes,
+    public static void NV21toI420SemiPlanar(byte[] nv21bytes, byte[] i420bytes,
                                       int width, int height) {
         System.arraycopy(nv21bytes, 0, i420bytes, 0, width * height);
         for (int i = width * height; i < nv21bytes.length; i += 2) {

@@ -155,7 +155,7 @@ public class CameraWrapper {
 
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-//            Log.i(TAG, "onPreviewFrame");
+            Log.i(TAG, "onPreviewFrame " + data.length);
 //            long startTime = System.currentTimeMillis();
 
 //            long endTime = System.currentTimeMillis();

@@ -1,4 +1,4 @@
-include ':app', ':drivevideo', ':yuvtorbga', ':driveblurdemo'
+include ':app', ':drivevideo', ':yuvtorbga', ':driveblurdemo', ':AudioVideoRecordingSample'
 //include ':spydroid'':gpuimage-library',
 include ':androidH264StreamDemo'
 include ':h264MediaCodecStreamer'
@@ -15,3 +15,4 @@ include ':mediaCodecEncode'
 include ':cameraPreview'
 //include ':pull_refresh'
 //include ':_qlibrary'
+include ':blurEffect'
