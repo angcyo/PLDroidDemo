@@ -1,18 +1,24 @@
 package org.camera.camera;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import com.angcyo.yuvtorbga.GPUImageNativeLibrary;
+
+import org.camera.Blur;
 import org.camera.FileSwapHelper;
+import org.camera.activity.CameraSurfaceTextureActivity;
 import org.camera.encode.VideoEncoderFromBuffer;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.Vector;
 
 @SuppressLint("NewApi")
 public class CameraWrapper {
@@ -20,6 +26,8 @@ public class CameraWrapper {
     public static final int IMAGE_WIDTH = 1920;
     private static final String TAG = "CameraWrapper";
     private static CameraWrapper mCameraWrapper;
+    Camera.PreviewCallback previewCallback;
+    WeakReference<CameraSurfaceTextureActivity.MainHandler> mainHandler;
     private Camera mCamera;
     private Camera.Parameters mCameraParamters;
     private boolean mIsPreviewing = false;
@@ -27,6 +35,7 @@ public class CameraWrapper {
     private CameraPreviewCallback mCameraPreviewCallback;
     private byte[] mImageCallbackBuffer = new byte[CameraWrapper.IMAGE_WIDTH
             * CameraWrapper.IMAGE_HEIGHT * 3 / 2];
+    private boolean isBlur = false;
 
     private CameraWrapper() {
     }
@@ -131,14 +140,20 @@ public class CameraWrapper {
         }
     }
 
-    public interface CamOpenOverCallback {
-        public void cameraHasOpened();
+    public void setBlur(boolean blur) {
+        isBlur = blur;
     }
 
-    Camera.PreviewCallback previewCallback;
+    public void setMainHandler(CameraSurfaceTextureActivity.MainHandler handler) {
+        mainHandler = new WeakReference<CameraSurfaceTextureActivity.MainHandler>(handler);
+    }
 
     public void setPreviewCallback(Camera.PreviewCallback callback) {
         previewCallback = callback;
+    }
+
+    public interface CamOpenOverCallback {
+        public void cameraHasOpened();
     }
 
     class CameraPreviewCallback implements Camera.PreviewCallback {
@@ -161,45 +176,37 @@ public class CameraWrapper {
 //            long endTime = System.currentTimeMillis();
 //            Log.i(TAG, Integer.toString((int) (endTime - startTime)) + " ms ");
             encoderRunnable.add(data);
-            if (previewCallback != null) {
-                previewCallback.onPreviewFrame(data, camera);
-            }
+//            if (previewCallback != null) {
+//                previewCallback.onPreviewFrame(data, camera);
+//            }
             camera.addCallbackBuffer(data);
         }
     }
 
     class VideoEncoderRunnable implements Runnable {
-        ArrayBlockingQueue<byte[]> bytes = new ArrayBlockingQueue<byte[]>(100);
+        Vector<byte[]> bytes = new Vector<byte[]>(100);
         VideoEncoderFromBuffer curVideoEncoder;
         VideoEncoderFromBuffer nextVideoEncoder;
         private boolean isExit = false;
         private Object lock = new Object();
         private FileSwapHelper fileSwapHelper;
+        BlurRunnable blurRunnable;
 
         public VideoEncoderRunnable() {
             fileSwapHelper = new FileSwapHelper();
+            blurRunnable = new BlurRunnable();
+            new Thread(blurRunnable).start();
         }
 
         public void exit() {
-            synchronized (lock) {
-                isExit = true;
-                lock.notifyAll();
-            }
+            isExit = true;
         }
 
         public void add(byte[] data) {
-            synchronized (lock) {
-                bytes.add(data);
-                lock.notifyAll();
-            }
+            bytes.add(data);
         }
 
         VideoEncoderFromBuffer getEncoder(String fileName) {
-//            if (curVideoEncoder == null) {
-//                curVideoEncoder = new VideoEncoderFromBuffer(fileName, IMAGE_WIDTH, IMAGE_HEIGHT);
-//            } else {
-//                curVideoEncoder.close();
-//            }
             if (curVideoEncoder != null) {
                 curVideoEncoder.close();
             }
@@ -216,33 +223,82 @@ public class CameraWrapper {
             if (nextVideoEncoder != null) {
                 nextVideoEncoder.close();
             }
+            blurRunnable.exit();
+        }
+
+        @Override
+        public void run() {
+
+            int frameIndex = 0;//保存帧的索引
+            int frameBlur = 10;//第几帧, 进行模糊处理
+            while (!isExit) {
+                if (!bytes.isEmpty()) {
+                    byte[] bytes = this.bytes.remove(0);
+
+                        /*模糊处理*/
+                    if (isBlur) {// && (frameIndex % frameBlur) == 0
+                        blurRunnable.add(bytes);
+                        frameIndex = 0;//防止数据过大越界
+                    }
+
+                        /*录像存储*/
+                    if (fileSwapHelper.requestSwapFile()) {
+                        //如果需要切换文件
+                        getEncoder(fileSwapHelper.getNextFileName()).encodeFrame(bytes);
+                    } else {
+                        curVideoEncoder.encodeFrame(bytes);
+                    }
+
+                    frameIndex++;
+                }
+            }
+            close();
+        }
+    }
+
+    class BlurRunnable implements Runnable {
+        Vector<byte[]> bytes = new Vector<byte[]>(60);
+        private boolean isExit = false;
+
+        public void add(byte[] data) {
+            bytes.add(data);
+        }
+
+        public void exit() {
+            isExit = true;
         }
 
         @Override
         public void run() {
             while (!isExit) {
 
-                synchronized (lock) {
-                    if (bytes.isEmpty()) {
-                        try {
-                            lock.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                if (!bytes.isEmpty()) {
+                    byte[] bytes = this.bytes.remove(0);
 
-                    } else {
-                        byte[] bytes = this.bytes.poll();
+                    CameraSurfaceTextureActivity.MainHandler mainHandler = CameraWrapper.this.mainHandler.get();
+                    if (mainHandler != null) {
 
-                        if (fileSwapHelper.requestSwapFile()) {
-                            //如果需要切换文件
-                            getEncoder(fileSwapHelper.getNextFileName()).encodeFrame(bytes);
-                        } else {
-                            curVideoEncoder.encodeFrame(bytes);
-                        }
+                        int cw = CameraWrapper.IMAGE_WIDTH;
+                        int ch = CameraWrapper.IMAGE_HEIGHT;
+
+                        int[] rgb = new int[cw * ch];
+
+                        long lastTime = System.currentTimeMillis();
+                        byte[] mFrameData = new byte[bytes.length];
+
+                        VideoEncoderFromBuffer.NV21toI420SemiPlanar(bytes, mFrameData, cw, ch);
+                        GPUImageNativeLibrary.YUVtoRBGA(mFrameData, cw, ch, rgb);
+
+                        Log.i(TAG, "decodeYUV420SP time:" + (System.currentTimeMillis() - lastTime));
+
+                        Bitmap bitmap = Bitmap.createBitmap(rgb, cw, ch, Bitmap.Config.ARGB_8888);
+
+                        mainHandler.sendMessage(mainHandler.obtainMessage(CameraSurfaceTextureActivity.MSG_BITMAP,
+                                isBlur ? Blur.fastBlur(bitmap, 25) : bitmap));// (0 < r <= 25)
+
                     }
                 }
             }
-            close();
         }
     }
 }

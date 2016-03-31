@@ -22,14 +22,14 @@ package com.serenegiant.glutils;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 /**
  * Helper class to draw to whole view using specific texture and texture matrix
@@ -146,18 +146,34 @@ public class GLDrawer2D {
 	 */
 	public static int initTex() {
 		if (DEBUG) Log.v(TAG, "initTex:");
-		final int[] tex = new int[1];
-		GLES20.glGenTextures(1, tex, 0);
-		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, tex[0]);
-		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-				GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-				GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-				GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-				GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-		return tex[0];
+		return genSurfaceTextureID();
+//		final int[] tex = new int[1];
+//		GLES20.glGenTextures(1, tex, 0);
+//		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, tex[0]);
+//		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+//				GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+//		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+//				GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+//		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+//				GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+//		GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+//				GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+//		return tex[0];
+	}
+
+	public static int genSurfaceTextureID() {
+		int[] texID = new int[1];
+		GLES20.glGenTextures(1, texID, 0);
+		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texID[0]);
+		_texParamHelper(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_LINEAR, GLES20.GL_CLAMP_TO_EDGE);
+		return texID[0];
+	}
+
+	private static void _texParamHelper(int type, int filter, int wrap) {
+		GLES20.glTexParameterf(type, GLES20.GL_TEXTURE_MIN_FILTER, filter);
+		GLES20.glTexParameterf(type, GLES20.GL_TEXTURE_MAG_FILTER, filter);
+		GLES20.glTexParameteri(type, GLES20.GL_TEXTURE_WRAP_S, wrap);
+		GLES20.glTexParameteri(type, GLES20.GL_TEXTURE_WRAP_T, wrap);
 	}
 
 	/**

@@ -3,8 +3,8 @@ package org.camera.activity;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -37,6 +37,7 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
     BlurRunnable blurRunnable;
     private CameraTexturePreview mCameraTexturePreview;
     private float mPreviewRate = -1f;
+    private Matrix blurMatrix;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +50,23 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
         mainHandler = new MainHandler();
         blurRunnable = new BlurRunnable();
         new Thread(blurRunnable).start();
+
+        Blur.init(this);
+
+        blurMatrix = new Matrix();
+        float[] blur = new float[9];
+        blur[0] = -1.2f;
+        blur[1] = -1f;
+        blur[2] = -1.2f;
+
+        blur[3] = -1f;
+        blur[4] = 20f;
+        blur[5] = -1f;
+
+        blur[6] = -1.2f;
+        blur[7] = -1f;
+        blur[8] = -1.2f;
+        blurMatrix.setValues(blur);
     }
 
     @Override
@@ -79,20 +97,31 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
         findViewById(R.id.blur).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                isBlur = !isBlur;
+
                 if (isBlur) {
-                    mCameraTexturePreview.setVisibility(View.VISIBLE);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER);
+//                    mCameraTexturePreview.setVisibility(View.VISIBLE);
+//                    imageView.setScaleType(ImageView.ScaleType.CENTER);
+                    mCameraTexturePreview.setTransform(blurMatrix);
+
+//                    Matrix matrix = new Matrix();
+//                    mCameraTexturePreview.getTransform(matrix);
+//                    matrix.postScale(4, 4);
+//                    mCameraTexturePreview.setTransform(matrix);
+
                 } else {
-                    mCameraTexturePreview.setVisibility(View.INVISIBLE);
-                    imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+//                    mCameraTexturePreview.setVisibility(View.INVISIBLE);
+//                    imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+                    mCameraTexturePreview.setTransform(null);
                 }
 
-                isBlur = !isBlur;
+//                CameraWrapper.getInstance().setBlur(isBlur);
+
             }
         });
 
         imageView = (ImageView) findViewById(R.id.imageView);
-        imageView.setRotation(90);
+//        imageView.setRotation(90);
     }
 
     private void initViewParams() {
@@ -111,15 +140,18 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
         SurfaceTexture surface = this.mCameraTexturePreview.getSurfaceTexture();
         CameraWrapper.getInstance().doStartPreview(surface, mPreviewRate);
 
-        CameraWrapper.getInstance().setPreviewCallback(new Camera.PreviewCallback() {
-            @Override
-            public void onPreviewFrame(byte[] bytes, Camera camera) {
-                blurRunnable.add(bytes);
-            }
-        });
+        CameraWrapper.getInstance().setMainHandler(mainHandler);
+
+
+//        CameraWrapper.getInstance().setPreviewCallback(new Camera.PreviewCallback() {
+//            @Override
+//            public void onPreviewFrame(byte[] bytes, Camera camera) {
+//                blurRunnable.add(bytes);
+//            }
+//        });
     }
 
-    class MainHandler extends Handler {
+    public class MainHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -165,30 +197,32 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
                             e.printStackTrace();
                         }
 
-                    } else {
-                        byte[] bytes = this.bytes.poll();
+                    }
+                }
 
-                        int cw = CameraWrapper.IMAGE_WIDTH;
-                        int ch = CameraWrapper.IMAGE_HEIGHT;
+                if (!isExit) {
+                    byte[] bytes = this.bytes.poll();
 
-                        int[] rgb = new int[cw * ch];
+                    int cw = CameraWrapper.IMAGE_WIDTH;
+                    int ch = CameraWrapper.IMAGE_HEIGHT;
 
-                        long lastTime = System.currentTimeMillis();
-                        byte[] mFrameData = new byte[bytes.length];
+                    int[] rgb = new int[cw * ch];
 
-                        VideoEncoderFromBuffer.NV21toI420SemiPlanar(bytes, mFrameData, cw, ch);
-                        GPUImageNativeLibrary.YUVtoRBGA(mFrameData, cw, ch, rgb);
+                    long lastTime = System.currentTimeMillis();
+                    byte[] mFrameData = new byte[bytes.length];
 
-                        Log.i(TAG, "decodeYUV420SP time:" + (System.currentTimeMillis() - lastTime));
+                    VideoEncoderFromBuffer.NV21toI420SemiPlanar(bytes, mFrameData, cw, ch);
+                    GPUImageNativeLibrary.YUVtoRBGA(mFrameData, cw, ch, rgb);
 
-                        Bitmap bitmap = Bitmap.createBitmap(rgb, cw, ch, Bitmap.Config.ARGB_8888);
+                    Log.i(TAG, "decodeYUV420SP time:" + (System.currentTimeMillis() - lastTime));
 
-                        int width = cw;
-                        int height = ch;
+                    Bitmap bitmap = Bitmap.createBitmap(rgb, cw, ch, Bitmap.Config.ARGB_8888);
+
+                    int width = cw;
+                    int height = ch;
 
 //                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? FastBlur.blur(bitmap, width, height) : bitmap));
-                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? Blur.fastblur(CameraSurfaceTextureActivity.this, bitmap, 25) : bitmap));
-                    }
+                    mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? Blur.fastBlur(bitmap, 25) : bitmap));
                 }
             }
         }

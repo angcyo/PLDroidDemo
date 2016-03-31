@@ -22,9 +22,6 @@ package com.serenegiant.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -34,8 +31,11 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.util.Log;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 public class MediaAudioEncoder extends MediaEncoder {
-	private static final boolean DEBUG = false;	// TODO set false on release
+	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "MediaAudioEncoder";
 
 	private static final String MIME_TYPE = "audio/mp4a-latm";

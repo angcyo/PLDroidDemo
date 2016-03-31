@@ -21,8 +21,8 @@ public class VideoEncoderFromBuffer {
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/Movies/h264";
     // parameters for the encoder
     private static final String MIME_TYPE = "video/avc"; // H.264 Advanced Video
-    private static final int FRAME_RATE = 30; // 15fps
-    private static final int IFRAME_INTERVAL = FRAME_RATE; // 10 between
+    private static final int FRAME_RATE = 25; // 15fps
+    private static final int IFRAME_INTERVAL = 10; // 10 between
     // I-frames
     private static final int TIMEOUT_USEC = 10000;
     private static final int COMPRESS_RATIO = 256;
