@@ -92,7 +92,7 @@ public class MediaMuxerRunnable implements Runnable {
             new Thread(videoRunnable).start();
         }
 
-        Log.e("angcyo", "" + filePath);
+        Log.e("angcyo", "保存至:" + filePath);
     }
 
     public void addTrackIndex(@TrackIndex int index, MediaFormat mediaFormat) {

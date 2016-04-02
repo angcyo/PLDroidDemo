@@ -25,7 +25,8 @@ public class AudioRunnable implements Runnable {
     private static final String MIME_TYPE = "audio/mp4a-latm";
 //    private static final String MIME_TYPE = "audio/amr-wb";
 //    private static final int SAMPLE_RATE = 44100;    // 44.1[KHz] is only setting guaranteed to be available on all devices.
-    private static final int SAMPLE_RATE = 8000;    // 44.1[KHz] is only setting guaranteed to be available on all devices.
+    private static final int SAMPLE_RATE = 16000;    // 44.1[KHz] is only setting guaranteed to be available on all devices.
+//    private static final int BIT_RATE = 16000;
     private static final int BIT_RATE = 64000;
     /*音轨数据源 mic就行吧?*/
     private static final int[] AUDIO_SOURCES = new int[]{
@@ -87,10 +88,11 @@ public class AudioRunnable implements Runnable {
         if (DEBUG) Log.i(TAG, "selected codec: " + audioCodecInfo.getName());
 
         final MediaFormat audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, 1);
-        audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
-        audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_MONO);//CHANNEL_IN_STEREO 立体声
+//        audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
+//        audioFormat.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_MONO);//CHANNEL_IN_STEREO 立体声
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
         audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+        audioFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, SAMPLE_RATE);
 //		audioFormat.setLong(MediaFormat.KEY_MAX_INPUT_SIZE, inputFile.length());
 //      audioFormat.setLong(MediaFormat.KEY_DURATION, (long)durationInMs );
         if (DEBUG) Log.i(TAG, "format: " + audioFormat);
