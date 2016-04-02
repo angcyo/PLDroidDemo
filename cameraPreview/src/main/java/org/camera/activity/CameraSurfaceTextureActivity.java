@@ -33,11 +33,14 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
     public MainHandler mainHandler;
     ImageView imageView;
     Bitmap bitmap;
-    boolean isBlur = false;
+    volatile boolean isBlur = false;
     BlurRunnable blurRunnable;
+    BlurRunnable2 blurRunnable2;
     private CameraTexturePreview mCameraTexturePreview;
     private float mPreviewRate = -1f;
     private Matrix blurMatrix;
+    private volatile boolean isDestroy = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +51,11 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
         initViewParams();
 
         mainHandler = new MainHandler();
-        blurRunnable = new BlurRunnable();
-        new Thread(blurRunnable).start();
+//        blurRunnable = new BlurRunnable();
+        blurRunnable2 = new BlurRunnable2();
+
+//        new Thread(blurRunnable2).start();
+//        new Thread(blurRunnable).start();
 
         Blur.init(this);
 
@@ -73,6 +79,7 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
     protected void onDestroy() {
         super.onDestroy();
         blurRunnable.exit();
+        isDestroy = true;
     }
 
     @Override
@@ -100,9 +107,9 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
                 isBlur = !isBlur;
 
                 if (isBlur) {
-//                    mCameraTexturePreview.setVisibility(View.VISIBLE);
+//                    mCameraTexturePreview.setVisibility(View.INVISIBLE);
 //                    imageView.setScaleType(ImageView.ScaleType.CENTER);
-                    mCameraTexturePreview.setTransform(blurMatrix);
+//                    mCameraTexturePreview.setTransform(blurMatrix);
 
 //                    Matrix matrix = new Matrix();
 //                    mCameraTexturePreview.getTransform(matrix);
@@ -112,7 +119,7 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
                 } else {
 //                    mCameraTexturePreview.setVisibility(View.INVISIBLE);
 //                    imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                    mCameraTexturePreview.setTransform(null);
+//                    mCameraTexturePreview.setTransform(null);
                 }
 
 //                CameraWrapper.getInstance().setBlur(isBlur);
@@ -224,6 +231,22 @@ public class CameraSurfaceTextureActivity extends Activity implements CamOpenOve
 //                        mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? FastBlur.blur(bitmap, width, height) : bitmap));
                     mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, isBlur ? Blur.fastBlur(bitmap, 25) : bitmap));
                 }
+            }
+        }
+    }
+
+    class BlurRunnable2 implements Runnable {
+
+        @Override
+        public void run() {
+            while (!isDestroy) {
+                long lastTime = System.currentTimeMillis();
+                Bitmap temp = mCameraTexturePreview.getBitmap(200, 300);
+                if (isBlur) {
+                    temp = Blur.fastBlur(temp, 25);
+                }
+                mainHandler.sendMessage(mainHandler.obtainMessage(MSG_BITMAP, temp));
+                Log.i(TAG, "getBitmap time:" + (System.currentTimeMillis() - lastTime));
             }
         }
     }

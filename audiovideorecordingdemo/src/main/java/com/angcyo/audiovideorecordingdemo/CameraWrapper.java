@@ -7,11 +7,12 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import com.angcyo.audiovideorecordingdemo.encoder.MediaAudioEncoder;
 import com.angcyo.audiovideorecordingdemo.encoder.MediaEncoder;
-import com.angcyo.audiovideorecordingdemo.encoder.MediaMuxerWrapper;
-import com.angcyo.audiovideorecordingdemo.encoder.MediaVideoEncoder;
+import com.angcyo.audiovideorecordingdemo.rencoder.FileUtils;
+import com.angcyo.audiovideorecordingdemo.rencoder.MediaMuxerRunnable;
+import com.angcyo.audiovideorecordingdemo.rencoder.VideoRunnable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -20,7 +21,26 @@ public class CameraWrapper {
     public static final int IMAGE_HEIGHT = 1080;
     public static final int IMAGE_WIDTH = 1920;
     private static final String TAG = "CameraWrapper";
+    private static final boolean DEBUG = true;    // TODO set false on release
     private static CameraWrapper mCameraWrapper;
+    /**
+     * callback methods from encoder
+     */
+    private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
+        @Override
+        public void onPrepared(final MediaEncoder encoder) {
+            if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
+//            if (encoder instanceof MediaVideoEncoder)
+//                mCameraView.setVideoEncoder((MediaVideoEncoder)encoder);
+        }
+
+        @Override
+        public void onStopped(final MediaEncoder encoder) {
+            if (DEBUG) Log.v(TAG, "onStopped:encoder=" + encoder);
+//            if (encoder instanceof MediaVideoEncoder)
+//                mCameraView.setVideoEncoder(null);
+        }
+    };
     Camera.PreviewCallback previewCallback;
     private Camera mCamera;
     private Camera.Parameters mCameraParamters;
@@ -30,10 +50,8 @@ public class CameraWrapper {
     private byte[] mImageCallbackBuffer = new byte[CameraWrapper.IMAGE_WIDTH
             * CameraWrapper.IMAGE_HEIGHT * 3 / 2];
     private boolean isBlur = false;
-
-    private static final boolean DEBUG = true;	// TODO set false on release
-
     private int openCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
+//    private int openCameraId = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
     private CameraWrapper() {
     }
@@ -47,6 +65,23 @@ public class CameraWrapper {
             }
         }
         return mCameraWrapper;
+    }
+
+    private static String getSaveFilePath(String fileName) {
+        StringBuilder fullPath = new StringBuilder();
+        fullPath.append(FileUtils.getExternalStorageDirectory());
+        fullPath.append(FileUtils.getMainDirName());
+        fullPath.append("/video2/");
+        fullPath.append(fileName);
+        fullPath.append(".mp4");
+
+        String string = fullPath.toString();
+        File file = new File(string);
+        File parentFile = file.getParentFile();
+        if (!parentFile.exists()) {
+            parentFile.mkdirs();
+        }
+        return string;
     }
 
     public void switchCameraId() {
@@ -150,7 +185,6 @@ public class CameraWrapper {
         isBlur = blur;
     }
 
-
     public void setPreviewCallback(Camera.PreviewCallback callback) {
         previewCallback = callback;
     }
@@ -160,12 +194,16 @@ public class CameraWrapper {
     }
 
     class CameraPreviewCallback implements Camera.PreviewCallback {
-//        VideoEncoderRunnable encoderRunnable;
-        private MediaMuxerWrapper mMuxer;
+        private final MediaMuxerRunnable mediaMuxerRunnable;
+        private FileSwapHelper fileSwapHelper;
 
         private CameraPreviewCallback() {
 //            encoderRunnable = new VideoEncoderRunnable();
 //            new Thread(encoderRunnable).start();
+            fileSwapHelper = new FileSwapHelper();
+
+            mediaMuxerRunnable = new MediaMuxerRunnable();
+
             startRecording();
         }
 
@@ -175,67 +213,28 @@ public class CameraWrapper {
         }
 
         private void startRecording() {
-            if (DEBUG) Log.v(TAG, "startRecording:");
             try {
-                mMuxer = new MediaMuxerWrapper(".mp4");	// if you record audio only, ".m4a" is also OK.
-                if (true) {
-                    // for video capturing
-                    new MediaVideoEncoder(mMuxer, mMediaEncoderListener, IMAGE_WIDTH, IMAGE_HEIGHT);
-                }
-                if (true) {
-                    // for audio capturing
-                    new MediaAudioEncoder(mMuxer, mMediaEncoderListener);
-                }
-                mMuxer.prepare();
-                mMuxer.startRecording();
-            } catch (final IOException e) {
-                Log.e(TAG, "startCapture:", e);
+//                String filePath = getSaveFilePath("angcyo_2016_04_01");
+                mediaMuxerRunnable.start();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
         private void stopRecording() {
-            if (DEBUG) Log.v(TAG, "stopRecording:mMuxer=" + mMuxer);
-            if (mMuxer != null) {
-                mMuxer.stopRecording();
-                mMuxer = null;
-                // you should not wait here
-            }
+            mediaMuxerRunnable.exit();
         }
 
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-            Log.i(TAG, "onPreviewFrame " + data.length);
-//            long startTime = System.currentTimeMillis();
-
-//            long endTime = System.currentTimeMillis();
-//            Log.i(TAG, Integer.toString((int) (endTime - startTime)) + " ms ");
-//            encoderRunnable.add(data);
-//            if (previewCallback != null) {
-//                previewCallback.onPreviewFrame(data, camera);
-//            }
-            ((MediaVideoEncoder) mMuxer.mVideoEncoder).frameAvailableSoon(data);
+//            Log.i(TAG, "onPreviewFrame " + data.length);
+            VideoRunnable videoRunnable = mediaMuxerRunnable.getVideoRunnable();
+            if (videoRunnable != null) {
+                videoRunnable.add(data);
+            }
             camera.addCallbackBuffer(data);
         }
     }
-
-    /**
-     * callback methods from encoder
-     */
-    private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
-        @Override
-        public void onPrepared(final MediaEncoder encoder) {
-            if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
-//            if (encoder instanceof MediaVideoEncoder)
-//                mCameraView.setVideoEncoder((MediaVideoEncoder)encoder);
-        }
-
-        @Override
-        public void onStopped(final MediaEncoder encoder) {
-            if (DEBUG) Log.v(TAG, "onStopped:encoder=" + encoder);
-//            if (encoder instanceof MediaVideoEncoder)
-//                mCameraView.setVideoEncoder(null);
-        }
-    };
 
 //    class VideoEncoderRunnable implements Runnable {
 //        Vector<byte[]> bytes = new Vector<byte[]>(100);

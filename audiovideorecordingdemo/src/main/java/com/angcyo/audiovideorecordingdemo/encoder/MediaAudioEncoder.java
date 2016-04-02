@@ -100,6 +100,7 @@ public class MediaAudioEncoder extends MediaEncoder {
 		super.release();
     }
 
+	/*音轨数据源 mic就行吧?*/
 	private static final int[] AUDIO_SOURCES = new int[] {
 		MediaRecorder.AudioSource.MIC,
 		MediaRecorder.AudioSource.DEFAULT,
