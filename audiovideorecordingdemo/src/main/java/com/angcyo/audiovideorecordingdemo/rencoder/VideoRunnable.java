@@ -204,7 +204,7 @@ public class VideoRunnable implements Runnable {
                 if (mBufferInfo.size != 0) {
                     MediaMuxerRunnable mediaMuxerRunnable = this.mediaMuxerRunnable.get();
 
-                    if (!mediaMuxerRunnable.isVideoAdd()) {
+                    if (mediaMuxerRunnable != null && !mediaMuxerRunnable.isVideoAdd()) {
                         MediaFormat newFormat = mMediaCodec.getOutputFormat();
                         mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_VIDEO, newFormat);
                         Log.e("angcyo-->", "添加视轨  " + newFormat.toString());

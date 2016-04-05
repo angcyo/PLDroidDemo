@@ -100,18 +100,20 @@ public class MediaMuxerRunnable implements Runnable {
             return;
         }
 
-        int track = mediaMuxer.addTrack(mediaFormat);
+        if (mediaMuxer != null) {
+            int track = mediaMuxer.addTrack(mediaFormat);
 
-        if (index == TRACK_VIDEO) {
-            videoTrackIndex = track;
-            isVideoAdd = true;
-            Log.e("angcyo-->", "添加视轨 完成");
-        } else {
-            audioTrackIndex = track;
-            isAudioAdd = true;
-            Log.e("angcyo-->", "添加音轨 完成");
+            if (index == TRACK_VIDEO) {
+                videoTrackIndex = track;
+                isVideoAdd = true;
+                Log.e("angcyo-->", "添加视轨 完成");
+            } else {
+                audioTrackIndex = track;
+                isAudioAdd = true;
+                Log.e("angcyo-->", "添加音轨 完成");
+            }
+            requestStart();
         }
-        requestStart();
     }
 
     public void exit() {
