@@ -17,7 +17,31 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:text="Hello World!"
+        android:textColor="@android:color/white" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal">
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/startAndStop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="startAndStop"
+            android:tag="stop"
+            android:text="停止"
+            android:textAllCaps="false" />
+
+        <android.support.v7.widget.AppCompatButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="crash"
+            android:text="Crash"
+            android:textAllCaps="false" />
+    </LinearLayout>
 
     <android.support.v7.widget.AppCompatButton
         android:layout_width="wrap_content"

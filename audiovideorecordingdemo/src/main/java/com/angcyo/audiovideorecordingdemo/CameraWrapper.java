@@ -10,7 +10,6 @@ import android.view.SurfaceHolder;
 import com.angcyo.audiovideorecordingdemo.encoder.MediaEncoder;
 import com.angcyo.audiovideorecordingdemo.rencoder.FileUtils;
 import com.angcyo.audiovideorecordingdemo.rencoder.MediaMuxerRunnable;
-import com.angcyo.audiovideorecordingdemo.rencoder.VideoRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,8 +49,8 @@ public class CameraWrapper {
     private byte[] mImageCallbackBuffer = new byte[CameraWrapper.IMAGE_WIDTH
             * CameraWrapper.IMAGE_HEIGHT * 3 / 2];
     private boolean isBlur = false;
-    private int openCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
-//    private int openCameraId = Camera.CameraInfo.CAMERA_FACING_FRONT;
+//    private int openCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private int openCameraId = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
     private CameraWrapper() {
     }
@@ -196,44 +195,26 @@ public class CameraWrapper {
     }
 
     class CameraPreviewCallback implements Camera.PreviewCallback {
-        private final MediaMuxerRunnable mediaMuxerRunnable;
-        private FileSwapHelper fileSwapHelper;
 
         private CameraPreviewCallback() {
-//            encoderRunnable = new VideoEncoderRunnable();
-//            new Thread(encoderRunnable).start();
-            fileSwapHelper = new FileSwapHelper();
-
-            mediaMuxerRunnable = new MediaMuxerRunnable();
-
             startRecording();
         }
 
         public void close() {
-//            encoderRunnable.exit();
             stopRecording();
         }
 
         private void startRecording() {
-            try {
-//                String filePath = getSaveFilePath("angcyo_2016_04_01");
-                mediaMuxerRunnable.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            MediaMuxerRunnable.startMuxer();
         }
 
         private void stopRecording() {
-            mediaMuxerRunnable.exit();
+            MediaMuxerRunnable.stopMuxer();
         }
 
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-//            Log.i(TAG, "onPreviewFrame " + data.length);
-            VideoRunnable videoRunnable = mediaMuxerRunnable.getVideoRunnable();
-            if (videoRunnable != null) {
-                videoRunnable.add(data);
-            }
+            MediaMuxerRunnable.addVideoFrameData(data);
             camera.addCallbackBuffer(data);
         }
     }

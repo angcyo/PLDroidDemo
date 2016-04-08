@@ -1,12 +1,8 @@
 package com.angcyo.audiovideorecordingdemo;
 
-import android.graphics.BlurMaskFilter;
-import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
-import android.graphics.RadialGradient;
-import android.graphics.Shader;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -30,25 +26,14 @@ public class MainActivity extends AppCompatActivity implements CameraWrapper.Cam
         ColorMatrix cm = new ColorMatrix();
         cm.setSaturation(0);
         blurPaint.setColorFilter(new ColorMatrixColorFilter(cm));
-        blurPaint.setMaskFilter(new BlurMaskFilter(25, BlurMaskFilter.Blur.NORMAL));
-        blurPaint.setShader(new RadialGradient(0.5f, 0.5f, 0.2f, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.MIRROR));
+//        blurPaint.setMaskFilter(new BlurMaskFilter(25, BlurMaskFilter.Blur.NORMAL));
+//        blurPaint.setShader(new RadialGradient(0.5f, 0.5f, 0.2f, Color.BLACK, Color.TRANSPARENT, Shader.TileMode.MIRROR));
         mCameraTexturePreview.setLayerType(View.LAYER_TYPE_HARDWARE, blurPaint);
     }
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-
-//        BlurBehind.getInstance().execute(MainActivity.this, new OnBlurCompleteListener() {
-//            @Override
-//            public void onBlurComplete() {
-//                Intent intent = new Intent(MainActivity.this, BlurredActivity.class);
-//                intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-//
-//                startActivity(intent);
-//            }
-//        });
     }
 
     public void switchCamera(View view) {
@@ -56,6 +41,22 @@ public class MainActivity extends AppCompatActivity implements CameraWrapper.Cam
         CameraWrapper.getInstance().switchCameraId();
         openCamera();
     }
+
+    public void startAndStop(View view) {
+        String tag = (String) view.getTag();
+        if (tag.equalsIgnoreCase("stop")) {
+            CameraWrapper.getInstance().doStopCamera();
+            view.setTag("start");
+        } else {
+            openCamera();
+            view.setTag("stop");
+        }
+    }
+
+    public void crash(View view) {
+        throw new IllegalArgumentException("崩溃测试...");
+    }
+
 
     @Override
     protected void onStart() {

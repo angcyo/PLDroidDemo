@@ -16,7 +16,7 @@ import java.util.Vector;
 /**
  * Created by robi on 2016-04-01 10:50.
  */
-public class VideoRunnable implements Runnable {
+public class VideoRunnable extends Thread {
     private static final String TAG = "VideoRunnable";
     private static final boolean VERBOSE = false; // lots of logging
     // parameters for the encoder
@@ -27,6 +27,7 @@ public class VideoRunnable implements Runnable {
     private static final int TIMEOUT_USEC = 10000;
     private static final int COMPRESS_RATIO = 256;
     private static final int BIT_RATE = CameraWrapper.IMAGE_HEIGHT * CameraWrapper.IMAGE_WIDTH * 3 * 8 * FRAME_RATE / COMPRESS_RATIO; // bit rate CameraWrapper.
+    private final Object lock = new Object();
     byte[] mFrameData;
     Vector<byte[]> frameBytes;
     private int mWidth;
@@ -37,13 +38,17 @@ public class VideoRunnable implements Runnable {
     private long mStartTime = 0;
     private volatile boolean isExit = false;
     private WeakReference<MediaMuxerRunnable> mediaMuxerRunnable;
+    private MediaFormat mediaFormat;
+    private MediaCodecInfo codecInfo;
+    private volatile boolean isStart = false;
+    private volatile boolean isMuxerReady = false;
 
     public VideoRunnable(int mWidth, int mHeight, WeakReference<MediaMuxerRunnable> mediaMuxerRunnable) {
         this.mWidth = mWidth;
         this.mHeight = mHeight;
         this.mediaMuxerRunnable = mediaMuxerRunnable;
-        frameBytes = new Vector<byte[]>(100);
-        mediaMuxerRunnable.get().setVideoRunnable(this);
+        frameBytes = new Vector<byte[]>();
+        prepare();
     }
 
     private static int selectColorFormat(MediaCodecInfo codecInfo,
@@ -107,15 +112,16 @@ public class VideoRunnable implements Runnable {
     }
 
     public void add(byte[] data) {
-        frameBytes.add(data);
+        if (frameBytes != null && isMuxerReady) {
+            frameBytes.add(data);
+        }
     }
 
-    public void prepare() {
+    private void prepare() {
         Log.i(TAG, "VideoEncoder()");
         mFrameData = new byte[this.mWidth * this.mHeight * 3 / 2];
-
         mBufferInfo = new MediaCodec.BufferInfo();
-        MediaCodecInfo codecInfo = selectCodec(MIME_TYPE);
+        codecInfo = selectCodec(MIME_TYPE);
         if (codecInfo == null) {
             Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
             return;
@@ -125,7 +131,7 @@ public class VideoRunnable implements Runnable {
         mColorFormat = selectColorFormat(codecInfo, MIME_TYPE);
         if (VERBOSE)
             Log.d(TAG, "found colorFormat: " + mColorFormat);
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE,
+        mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE,
                 this.mWidth, this.mHeight);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
@@ -133,15 +139,38 @@ public class VideoRunnable implements Runnable {
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
         if (VERBOSE)
             Log.d(TAG, "format: " + mediaFormat);
-        try {
-            mMediaCodec = MediaCodec.createByCodecName(codecInfo.getName());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    }
+
+    private void startMediaCodec() throws IOException {
+        mMediaCodec = MediaCodec.createByCodecName(codecInfo.getName());
         mMediaCodec.configure(mediaFormat, null, null,
                 MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
-        mStartTime = System.nanoTime();
+
+        isStart = true;
+    }
+
+    private void stopMediaCodec() {
+        if (mMediaCodec != null) {
+            mMediaCodec.stop();
+            mMediaCodec.release();
+            mMediaCodec = null;
+        }
+        isStart = false;
+        Log.e("angcyo-->", "stop video 录制...");
+    }
+
+    public synchronized void restart() {
+        isStart = false;
+        isMuxerReady = false;
+        frameBytes.clear();
+    }
+
+    public void setMuxerReady(boolean muxerReady) {
+        synchronized (lock) {
+            isMuxerReady = muxerReady;
+            lock.notify();
+        }
     }
 
     private void encodeFrame(byte[] input/* , byte[] output */) {
@@ -178,7 +207,6 @@ public class VideoRunnable implements Runnable {
             } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 outputBuffers = mMediaCodec.getOutputBuffers();
             } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
                 MediaMuxerRunnable mediaMuxerRunnable = this.mediaMuxerRunnable.get();
                 if (mediaMuxerRunnable != null) {
@@ -206,15 +234,14 @@ public class VideoRunnable implements Runnable {
 
                     if (mediaMuxerRunnable != null && !mediaMuxerRunnable.isVideoAdd()) {
                         MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                        mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_VIDEO, newFormat);
                         Log.e("angcyo-->", "添加视轨  " + newFormat.toString());
+                        mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_VIDEO, newFormat);
                     }
-
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
                     outputBuffer.position(mBufferInfo.offset);
                     outputBuffer.limit(mBufferInfo.offset + mBufferInfo.size);
 
-                    if (mediaMuxerRunnable != null) {
+                    if (mediaMuxerRunnable != null && mediaMuxerRunnable.isMuxerStart()) {
                         mediaMuxerRunnable.addMuxerData(new MediaMuxerRunnable.MuxerData(
                                 MediaMuxerRunnable.TRACK_VIDEO, outputBuffer, mBufferInfo
                         ));
@@ -232,16 +259,44 @@ public class VideoRunnable implements Runnable {
     @Override
     public void run() {
         while (!isExit) {
-            if (!frameBytes.isEmpty()) {
+            if (!isStart) {
+                stopMediaCodec();
+
+                if (!isMuxerReady) {
+                    synchronized (lock) {
+                        try {
+                            Log.e("ang-->", "video -- 等待混合器准备...");
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                }
+
+                if (isMuxerReady) {
+                    try {
+                        Log.e("angcyo-->", "video -- startMediaCodec...");
+                        startMediaCodec();
+                    } catch (IOException e) {
+                        isStart = false;
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e1) {
+                        }
+                    }
+                }
+
+            } else if (!frameBytes.isEmpty()) {
                 byte[] bytes = this.frameBytes.remove(0);
-                encodeFrame(bytes);
+//                Log.e("ang-->", "解码视频数据:" + bytes.length);
+                try {
+                    encodeFrame(bytes);
+                } catch (Exception e) {
+                    Log.e("angcyo-->", "解码视频(Video)数据 失败");
+                    e.printStackTrace();
+                }
             }
         }
-        if (mMediaCodec != null) {
-            mMediaCodec.stop();
-            mMediaCodec.release();
-            mMediaCodec = null;
-        }
-        Log.e("angcyo-->", "退出视频录制...");
+
+        Log.e("angcyo-->", "Video 录制线程 退出...");
     }
 }

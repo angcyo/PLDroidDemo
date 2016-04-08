@@ -9,41 +9,34 @@ import android.view.TextureView;
 
 @SuppressLint("NewApi")
 public class CameraTexturePreview extends TextureView implements TextureView.SurfaceTextureListener {
-	private final String TAG = "CameraTexturePreview";
-	Context mContext;  
-    SurfaceTexture mSurface; 
-	public CameraTexturePreview(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		this.mContext = context;  
-	    this.setSurfaceTextureListener(this);  
-	}
+    private final String TAG = "CameraTexturePreview";
 
-	@Override
-	public void onSurfaceTextureAvailable(SurfaceTexture surface, int width,
-			int height) {
-		Log.i(TAG, "onSurfaceTextureAvailable()");
-		this.mSurface = surface;  
-	}
+    public CameraTexturePreview(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        this.setSurfaceTextureListener(this);
+    }
 
-	@Override
-	public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width,
-			int height) {
-		Log.i(TAG, "onSurfaceTextureSizeChanged()");  
-	}
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width,
+                                          int height) {
+        Log.i(TAG, "onSurfaceTextureAvailable()");
+    }
 
-	@Override
-	public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-		Log.i(TAG, "onSurfaceTextureDestroyed()");  
-		CameraWrapper.getInstance().doStopCamera();
-		return false;
-	}
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width,
+                                            int height) {
+        Log.i(TAG, "onSurfaceTextureSizeChanged()");
+    }
 
-	@Override
-	public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        Log.i(TAG, "onSurfaceTextureDestroyed()");
+        CameraWrapper.getInstance().doStopCamera();
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
 //		Log.i(TAG, "onSurfaceTextureUpdated()");  
-	}
-
-	public SurfaceTexture getSurfaceTexture() {
-		return this.mSurface;
-	}
+    }
 }
