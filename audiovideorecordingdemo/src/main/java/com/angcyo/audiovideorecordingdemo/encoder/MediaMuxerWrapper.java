@@ -118,11 +118,11 @@ public class MediaMuxerWrapper {
 	}
 
 	/**
-	 * request start recording from encoder
+	 * request readyStart recording from encoder
 	 * @return true when muxer is ready to write
 	 */
 	/*package*/ synchronized boolean start() {
-		if (DEBUG) Log.v(TAG,  "start:");
+		if (DEBUG) Log.v(TAG,  "readyStart:");
 		mStatredCount++;
 		if ((mEncoderCount > 0) && (mStatredCount == mEncoderCount)) {
 			mMediaMuxer.start();

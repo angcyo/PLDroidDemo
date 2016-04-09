@@ -58,7 +58,7 @@ public class AudioRunnable extends Thread {
     }
 
     private static final MediaCodecInfo selectAudioCodec(final String mimeType) {
-        if (DEBUG) Log.v(TAG, "selectAudioCodec:");
+        if (DEBUG) if(DEBUG) Log.v(TAG, "selectAudioCodec:");
 
         MediaCodecInfo result = null;
         // get the list of available codecs
@@ -71,7 +71,7 @@ public class AudioRunnable extends Thread {
             }
             final String[] types = codecInfo.getSupportedTypes();
             for (int j = 0; j < types.length; j++) {
-                if (DEBUG) Log.i(TAG, "supportedType:" + codecInfo.getName() + ",MIME=" + types[j]);
+                if (DEBUG) if(DEBUG) Log.i(TAG, "supportedType:" + codecInfo.getName() + ",MIME=" + types[j]);
                 if (types[j].equalsIgnoreCase(mimeType)) {
                     if (result == null) {
                         result = codecInfo;
@@ -86,10 +86,10 @@ public class AudioRunnable extends Thread {
     private void prepare() {
         audioCodecInfo = selectAudioCodec(MIME_TYPE);
         if (audioCodecInfo == null) {
-            Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
+            if(DEBUG) Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
             return;
         }
-        if (DEBUG) Log.i(TAG, "selected codec: " + audioCodecInfo.getName());
+        if (DEBUG) if(DEBUG) Log.i(TAG, "selected codec: " + audioCodecInfo.getName());
 
         audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, 1);
 //        audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
@@ -99,7 +99,7 @@ public class AudioRunnable extends Thread {
         audioFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, SAMPLE_RATE);
 //		audioFormat.setLong(MediaFormat.KEY_MAX_INPUT_SIZE, inputFile.length());
 //      audioFormat.setLong(MediaFormat.KEY_DURATION, (long)durationInMs );
-        if (DEBUG) Log.i(TAG, "format: " + audioFormat);
+        if (DEBUG) if(DEBUG) Log.i(TAG, "format: " + audioFormat);
     }
 
     private void startMediaCodec() throws IOException {
@@ -109,7 +109,7 @@ public class AudioRunnable extends Thread {
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mMediaCodec.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
-        if (DEBUG) Log.i(TAG, "prepare finishing");
+        if (DEBUG) if(DEBUG) Log.i(TAG, "prepare finishing");
 
         prepareAudioRecord();
 
@@ -128,7 +128,7 @@ public class AudioRunnable extends Thread {
             mMediaCodec = null;
         }
         isStart = false;
-        Log.e("angcyo-->", "stop audio 录制...");
+        if(DEBUG) Log.e("angcyo-->", "stop audio 录制...");
     }
 
     public synchronized void restart() {
@@ -160,7 +160,7 @@ public class AudioRunnable extends Thread {
                 if (audioRecord != null) break;
             }
         } catch (final Exception e) {
-            Log.e(TAG, "AudioThread#run", e);
+            if(DEBUG) Log.e(TAG, "AudioThread#run", e);
         }
 
         if (audioRecord != null) {
@@ -174,7 +174,7 @@ public class AudioRunnable extends Thread {
 
     public void setMuxerReady(boolean muxerReady) {
         synchronized (lock) {
-//            Log.e("angcyo-->", Thread.currentThread().getId() + " audio -- setMuxerReady..." + muxerReady);
+//            if(DEBUG) Log.e("angcyo-->", Thread.currentThread().getId() + " audio -- setMuxerReady..." + muxerReady);
             isMuxerReady = muxerReady;
             lock.notify();
         }
@@ -190,12 +190,12 @@ public class AudioRunnable extends Thread {
             if (!isStart) {
                 stopMediaCodec();
 
-                Log.e("angcyo-->", Thread.currentThread().getId() + " audio -- run..." + isMuxerReady);
+                if(DEBUG) Log.e("angcyo-->", Thread.currentThread().getId() + " audio -- run..." + isMuxerReady);
 
                 if (!isMuxerReady) {
                     synchronized (lock) {
                         try {
-                            Log.e("ang-->", "audio -- 等待混合器准备...");
+                            if(DEBUG) Log.e("ang-->", "audio -- 等待混合器准备...");
                             lock.wait();
                         } catch (InterruptedException e) {
                         }
@@ -204,7 +204,7 @@ public class AudioRunnable extends Thread {
 
                 if (isMuxerReady) {
                     try {
-                        Log.e("angcyo-->", "audio -- startMediaCodec...");
+                        if(DEBUG) Log.e("angcyo-->", "audio -- startMediaCodec...");
                         startMediaCodec();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -222,11 +222,11 @@ public class AudioRunnable extends Thread {
                     // set audio data to encoder
                     buf.position(readBytes);
                     buf.flip();
-//                    Log.e("ang-->", "解码音频数据:" + readBytes);
+//                    if(DEBUG) Log.e("ang-->", "解码音频数据:" + readBytes);
                     try {
                         encode(buf, readBytes, getPTSUs());
                     } catch (Exception e) {
-                        Log.e("angcyo-->", "解码音频(Audio)数据 失败");
+                        if(DEBUG) Log.e("angcyo-->", "解码音频(Audio)数据 失败");
                         e.printStackTrace();
                     }
                 }
@@ -234,7 +234,7 @@ public class AudioRunnable extends Thread {
 
             /**/
         }
-        Log.e("angcyo-->", "Audio 录制线程 退出...");
+        if(DEBUG) Log.e("angcyo-->", "Audio 录制线程 退出...");
     }
 
     private void encode(final ByteBuffer buffer, final int length, final long presentationTimeUs) {
@@ -248,11 +248,11 @@ public class AudioRunnable extends Thread {
             if (buffer != null) {
                 inputBuffer.put(buffer);
             }
-//	            if (DEBUG) Log.v(TAG, "encode:queueInputBuffer");
+//	            if (DEBUG) if(DEBUG) Log.v(TAG, "encode:queueInputBuffer");
             if (length <= 0) {
                 // send EOS
 //                    mIsEOS = true;
-                if (DEBUG) Log.i(TAG, "send BUFFER_FLAG_END_OF_STREAM");
+                if (DEBUG) if(DEBUG) Log.i(TAG, "send BUFFER_FLAG_END_OF_STREAM");
                 mMediaCodec.queueInputBuffer(inputBufferIndex, 0, 0,
                         presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
             } else {
@@ -268,7 +268,7 @@ public class AudioRunnable extends Thread {
         /*获取解码后的数据*/
         final MediaMuxerRunnable muxer = mediaMuxerRunnable.get();
         if (muxer == null) {
-            Log.w(TAG, "MediaMuxerRunnable is unexpectedly null");
+            if(DEBUG) Log.w(TAG, "MediaMuxerRunnable is unexpectedly null");
             return;
         }
         ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
@@ -284,7 +284,7 @@ public class AudioRunnable extends Thread {
                 final MediaFormat format = mMediaCodec.getOutputFormat(); // API >= 16
                 MediaMuxerRunnable mediaMuxerRunnable = this.mediaMuxerRunnable.get();
                 if (mediaMuxerRunnable != null) {
-                    Log.e("angcyo-->", "添加音轨 INFO_OUTPUT_FORMAT_CHANGED " + format.toString());
+                    if(DEBUG) Log.e("angcyo-->", "添加音轨 INFO_OUTPUT_FORMAT_CHANGED " + format.toString());
                     mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_AUDIO, format);
                 }
 
@@ -296,13 +296,13 @@ public class AudioRunnable extends Thread {
                     // but MediaCodec#getOutputFormat can not call here(because INFO_OUTPUT_FORMAT_CHANGED don't come yet)
                     // therefor we should expand and prepare output format from buffer data.
                     // This sample is for API>=18(>=Android 4.3), just ignore this flag here
-                    if (DEBUG) Log.d(TAG, "drain:BUFFER_FLAG_CODEC_CONFIG");
+                    if (DEBUG) if(DEBUG) Log.d(TAG, "drain:BUFFER_FLAG_CODEC_CONFIG");
                     mBufferInfo.size = 0;
                 }
 
                 if (mBufferInfo.size != 0 && muxer != null && muxer.isMuxerStart()) {
                     mBufferInfo.presentationTimeUs = getPTSUs();
-//                    Log.e("angcyo-->", "发送音频数据 " + mBufferInfo.size);
+//                    if(DEBUG) Log.e("angcyo-->", "发送音频数据 " + mBufferInfo.size);
                     muxer.addMuxerData(new MediaMuxerRunnable.MuxerData(
                             MediaMuxerRunnable.TRACK_AUDIO, encodedData, mBufferInfo));
                     prevOutputPTSUs = mBufferInfo.presentationTimeUs;

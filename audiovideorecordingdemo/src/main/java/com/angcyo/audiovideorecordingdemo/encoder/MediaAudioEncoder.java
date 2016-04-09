@@ -141,7 +141,7 @@ public class MediaAudioEncoder extends MediaEncoder {
 				if (audioRecord != null) {
 		            try {
 						if (mIsCapturing) {
-		    				if (DEBUG) Log.v(TAG, "AudioThread:start audio recording");
+		    				if (DEBUG) Log.v(TAG, "AudioThread:readyStart audio recording");
 							final ByteBuffer buf = ByteBuffer.allocateDirect(SAMPLES_PER_FRAME);
 			                int readBytes;
 			                audioRecord.startRecording();

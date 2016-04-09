@@ -21,7 +21,9 @@ public class FileSwapHelper {
     public static final int CARD_DF = 0;
     public static final int CARD_TF = 1;
     public static String BASE_VIDEO = "/video4/";
+    public static String BASE_PHOTO = "/photos/";
     public static String BASE_EXT = ".mp4";
+    public static String BASE_PHOTO_EXT = ".png";
     private String currentFileName = "-";//用于匹配1分钟时间的文件名
     private boolean isTFCard = false;//用于判断拔插TF卡
     private SimpleDateFormat simpleDateFormat;

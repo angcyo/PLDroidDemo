@@ -1,7 +1,10 @@
 package com.angcyo.audiovideorecordingdemo.rencoder;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Environment;
+
+import com.angcyo.audiovideorecordingdemo.FileSwapHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,6 +18,7 @@ import java.io.OutputStream;
 import java.net.FileNameMap;
 import java.net.URLConnection;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -28,9 +32,13 @@ import java.util.zip.ZipOutputStream;
  */
 public class FileUtils {
 
-    public static String T_FLASH_PATH = "/storage/sdcard1";
-
     private static final int BUFF_SIZE = 1024 * 1024; // 1M Byte
+    public static String T_FLASH_PATH = "/storage/sdcard1";
+    public static SimpleDateFormat simpleDateFormat;
+
+    static {
+        simpleDateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
+    }
 
     /**
      * 获取录像存储目录
@@ -69,7 +77,6 @@ public class FileUtils {
         }
     }
 
-
     public static boolean isTFlashCardExists() {
         boolean tfExistsFlag = false;
         tfExistsFlag = new File(T_FLASH_PATH, "Android").exists();
@@ -99,7 +106,6 @@ public class FileUtils {
 
         return 0;
     }
-
 
     public static double getTFlashCardFreeSpace() {
         File dir;
@@ -192,7 +198,6 @@ public class FileUtils {
     public static String getMainDirName() {
         return "/dudu";
     }
-
 
     /**
      * 读取asset目录下文件。
@@ -289,7 +294,6 @@ public class FileUtils {
         return null;
     }
 
-
     public static String fileByte2Mb(double size) {
         double mbSize = size / 1024 / 1024;
         DecimalFormat df = new DecimalFormat("#.##");
@@ -350,7 +354,6 @@ public class FileUtils {
         }
         return false;
     }
-
 
     /**
      * 获取sdcard路径
@@ -809,5 +812,43 @@ public class FileUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 保存Bitmap到文件
+     */
+    public static void saveBitmap(Bitmap bmp, String filePath) throws FileNotFoundException {
+//        ParcelFileDescriptor.AutoCloseOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+//                ParcelFileDescriptor.open(new File(filePath), ParcelFileDescriptor.MODE_WRITE_ONLY));
+
+        FileOutputStream outputStream = new FileOutputStream(new File(filePath));
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+    }
+
+    public static String getPhotoSaveFilePath() {
+        return getPhotoSaveFilePath(simpleDateFormat.format(System.currentTimeMillis()));
+    }
+
+    public static String getPhotoSaveFilePath(String fileName) {
+        StringBuilder fullPath = new StringBuilder();
+        boolean isTFCard = FileUtils.isTFlashCardExists();
+        if (isTFCard) {
+            fullPath.append(FileUtils.T_FLASH_PATH);
+        } else {
+            fullPath.append(FileUtils.getExternalStorageDirectory());
+        }
+        fullPath.append(FileUtils.getMainDirName());
+        fullPath.append(FileSwapHelper.BASE_PHOTO);
+        fullPath.append(fileName);
+        fullPath.append(FileSwapHelper.BASE_PHOTO_EXT);
+
+        String string = fullPath.toString();
+        File file = new File(string);
+        File parentFile = file.getParentFile();
+        if (!parentFile.exists()) {
+            parentFile.mkdirs();
+        }
+
+        return string;
     }
 }

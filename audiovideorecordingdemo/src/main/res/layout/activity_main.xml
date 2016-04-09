@@ -30,20 +30,34 @@
             android:id="@+id/startAndStop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="startAndStop"
             android:tag="stop"
             android:text="停止"
             android:textAllCaps="false" />
 
         <android.support.v7.widget.AppCompatButton
+            android:id="@+id/crash"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="crash"
             android:text="Crash"
+            android:textAllCaps="false" />
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/takePhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="拍照"
+            android:textAllCaps="false" />
+
+        <android.support.v7.widget.AppCompatButton
+            android:id="@+id/takeVideoPhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="视频缩略图提取"
             android:textAllCaps="false" />
     </LinearLayout>
 
     <android.support.v7.widget.AppCompatButton
+        android:id="@+id/switchCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"

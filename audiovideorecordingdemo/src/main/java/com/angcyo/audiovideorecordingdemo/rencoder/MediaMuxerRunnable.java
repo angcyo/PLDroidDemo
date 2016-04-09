@@ -19,11 +19,12 @@ import java.util.Vector;
 /**
  * Created by robi on 2016-04-01 10:45.
  */
-public class MediaMuxerRunnable implements Runnable {
+public class MediaMuxerRunnable extends Thread {
 
     public static final int TRACK_VIDEO = 0;
     public static final int TRACK_AUDIO = 1;
-    private static MediaMuxerRunnable mediaMuxerRunnable;
+    public static boolean DEBUG = false;
+    private static MediaMuxerRunnable mediaMuxerThread;
     private final Object lock = new Object();
     private MediaMuxer mediaMuxer;
     private Vector<MuxerData> muxerDatas;
@@ -38,6 +39,38 @@ public class MediaMuxerRunnable implements Runnable {
     private boolean isThreadStart = false;
 
     private MediaMuxerRunnable() {
+    }
+
+    public static void startMuxer() {
+        if (mediaMuxerThread == null) {
+            synchronized (MediaMuxerRunnable.class) {
+                if (mediaMuxerThread == null) {
+                    mediaMuxerThread = new MediaMuxerRunnable();
+                    mediaMuxerThread.start();
+                }
+            }
+        }
+    }
+
+    public static void stopMuxer() {
+        if (mediaMuxerThread != null) {
+            mediaMuxerThread.exit();
+            try {
+                mediaMuxerThread.join();
+            } catch (InterruptedException e) {
+
+            }
+            mediaMuxerThread = null;
+        }
+    }
+
+    public static void addVideoFrameData(byte[] data) {
+        if (mediaMuxerThread != null) {
+            mediaMuxerThread.addVideoData(data);
+        }
+    }
+
+    private void initMuxer() {
         muxerDatas = new Vector<>();
         fileSwapHelper = new FileSwapHelper();
 
@@ -48,31 +81,9 @@ public class MediaMuxerRunnable implements Runnable {
         videoThread.start();
 
         try {
-            start();
+            readyStart();
         } catch (IOException e) {
             restart();
-        }
-    }
-
-    public static void startMuxer() {
-        if (mediaMuxerRunnable == null) {
-            synchronized (MediaMuxerRunnable.class) {
-                if (mediaMuxerRunnable == null) {
-                    mediaMuxerRunnable = new MediaMuxerRunnable();
-                }
-            }
-        }
-    }
-
-    public static void stopMuxer() {
-        if (mediaMuxerRunnable != null) {
-            mediaMuxerRunnable.exit();
-        }
-    }
-
-    public static void addVideoFrameData(byte[] data) {
-        if (mediaMuxerRunnable != null) {
-            mediaMuxerRunnable.addVideoData(data);
         }
     }
 
@@ -90,13 +101,12 @@ public class MediaMuxerRunnable implements Runnable {
         return isVideoAdd;
     }
 
-    public void start() throws IOException {
-        if (fileSwapHelper.requestSwapFile()) {
-            start(fileSwapHelper.getNextFileName(), false);
-        }
+    private void readyStart() throws IOException {
+        fileSwapHelper.requestSwapFile(true);
+        readyStart(fileSwapHelper.getNextFileName(), false);
     }
 
-    public void start(String filePath, boolean restart) throws IOException {
+    private void readyStart(String filePath, boolean restart) throws IOException {
         isExit = false;
         isVideoAdd = false;
         isAudioAdd = false;
@@ -104,28 +114,31 @@ public class MediaMuxerRunnable implements Runnable {
 
         mediaMuxer = new MediaMuxer(filePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 //        if (audioThread != null) {
-//            Log.e("ang-->", "配置Audio解码.");
+//            if(DEBUG) Log.e("ang-->", "配置Audio解码.");
 //            audioThread.prepare();
 //            audioThread.prepareAudioRecord();
 //        }
 //        if (videoThread != null) {
-//            Log.e("ang-->", "配置Video解码.");
+//            if(DEBUG) Log.e("ang-->", "配置Video解码.");
 //            videoThread.prepare();
 //        }
-        if (!restart) {
-            Log.e("ang-->", "Start 混合线程.");
-            new Thread(this).start();
-        }
+//        if (!restart) {
+//            if (DEBUG) Log.e("ang-->", "Start 混合线程.");
+//            new Thread(this).start();
+//            mediaMuxerThread.start();
+//        }
+
         if (audioThread != null) {
-//            new Thread(audioThread).start();
+//            new Thread(audioThread).readyStart();
             audioThread.setMuxerReady(true);
         }
         if (videoThread != null) {
-//            new Thread(videoThread).start();
+//            new Thread(videoThread).readyStart();
             videoThread.setMuxerReady(true);
         }
 
-        Log.e("angcyo-->", "start(String filePath, boolean restart) 保存至:" + filePath);
+        if (DEBUG)
+            Log.e("angcyo-->", "readyStart(String filePath, boolean restart) 保存至:" + filePath);
     }
 
     public synchronized void addTrackIndex(@TrackIndex int index, MediaFormat mediaFormat) {
@@ -154,11 +167,11 @@ public class MediaMuxerRunnable implements Runnable {
             if (index == TRACK_VIDEO) {
                 videoTrackIndex = track;
                 isVideoAdd = true;
-                Log.e("angcyo-->", "添加视轨 完成");
+                if (DEBUG) Log.e("angcyo-->", "添加视轨 完成");
             } else {
                 audioTrackIndex = track;
                 isAudioAdd = true;
-                Log.e("angcyo-->", "添加音轨 完成");
+                if (DEBUG) Log.e("angcyo-->", "添加音轨 完成");
             }
             requestStart();
         }
@@ -190,7 +203,7 @@ public class MediaMuxerRunnable implements Runnable {
 
 
     public void addMuxerData(MuxerData data) {
-//        Log.e("ang-->", "收到混合数据..." + data.bufferInfo.size);
+//        if(DEBUG) Log.e("ang-->", "收到混合数据..." + data.bufferInfo.size);
 
         if (!isMuxerStart()) {
             return;
@@ -210,42 +223,43 @@ public class MediaMuxerRunnable implements Runnable {
 
     private void restart(String filePath) {
         restartAudioVideo();
-//        Log.e("angcyo-->", "退出音视频线程完成.");
-        stop();
+//        if(DEBUG) Log.e("angcyo-->", "退出音视频线程完成.");
+        readyStop();
         //-----------------
 
         try {
-            start(filePath, true);
+            readyStart(filePath, true);
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e("angcyo-->", "start(filePath, true) " + "重启混合器失败 尝试再次重启!");
+            if (DEBUG) Log.e("angcyo-->", "readyStart(filePath, true) " + "重启混合器失败 尝试再次重启!");
             restart();
             return;
         }
-        Log.e("angcyo-->", "重启混合器完成");
+        if (DEBUG) Log.e("angcyo-->", "重启混合器完成");
     }
 
     @Override
     public void run() {
         isThreadStart = true;
+        initMuxer();
         while (!isExit) {
-            if (muxerDatas.isEmpty()) {
-                synchronized (lock) {
-                    try {
-                        Log.e("ang-->", "等待混合数据...");
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            if (isMuxerStart()) {
+                if (muxerDatas.isEmpty()) {
+                    synchronized (lock) {
+                        try {
+                            if (DEBUG) Log.e("ang-->", "等待混合数据...");
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
-            } else {
-                if (fileSwapHelper.requestSwapFile()) {
-                    //需要切换文件
-                    String nextFileName = fileSwapHelper.getNextFileName();
-                    Log.e("angcyo-->", "正在重启混合器..." + nextFileName);
-                    restart(nextFileName);
                 } else {
-                    if (isMuxerStart()) {
+                    if (fileSwapHelper.requestSwapFile()) {
+                        //需要切换文件
+                        String nextFileName = fileSwapHelper.getNextFileName();
+                        if (DEBUG) Log.e("angcyo-->", "正在重启混合器..." + nextFileName);
+                        restart(nextFileName);
+                    } else {
                         MuxerData data = muxerDatas.remove(0);
                         int track;
                         if (data.trackIndex == TRACK_VIDEO) {
@@ -253,39 +267,38 @@ public class MediaMuxerRunnable implements Runnable {
                         } else {
                             track = audioTrackIndex;
                         }
-                        Log.e("ang-->", "写入混合数据 " + data.bufferInfo.size);
+                        if (DEBUG) Log.e("ang-->", "写入混合数据 " + data.bufferInfo.size);
                         try {
                             mediaMuxer.writeSampleData(track, data.byteBuf, data.bufferInfo);
                         } catch (Exception e) {
                             e.printStackTrace();
-                            Log.e("angcyo-->", "写入混合数据失败!");
+                            if (DEBUG) Log.e("angcyo-->", "写入混合数据失败!");
 
                             restart();
                         }
-                    } else {
-                        synchronized (lock) {
-                            try {
-                                Log.e("angcyo-->", "等待音视轨添加...");
-                                lock.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
                     }
                 }
-
+            } else {
+                synchronized (lock) {
+                    try {
+                        if (DEBUG) Log.e("angcyo-->", "等待音视轨添加...");
+                        lock.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
-        stop();
+        readyStop();
         isThreadStart = false;
-        Log.e("angcyo-->", "混合器退出...");
+        if (DEBUG) Log.e("angcyo-->", "混合器退出...");
     }
 
     private void requestStart() {
         synchronized (lock) {
             if (isMuxerStart()) {
                 mediaMuxer.start();
-                Log.e("angcyo-->", "requestStart 启动混合器 开始等待数据登入...");
+                if (DEBUG) Log.e("angcyo-->", "requestStart 启动混合器 开始等待数据输入...");
                 lock.notify();
             }
         }
@@ -308,7 +321,7 @@ public class MediaMuxerRunnable implements Runnable {
         }
     }
 
-    private void stop() {
+    private void readyStop() {
         if (mediaMuxer != null) {
             try {
                 mediaMuxer.stop();

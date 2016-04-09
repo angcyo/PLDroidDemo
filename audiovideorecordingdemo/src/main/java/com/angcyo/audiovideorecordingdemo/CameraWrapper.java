@@ -231,7 +231,7 @@ public class CameraWrapper {
 //        public VideoEncoderRunnable() {
 //            fileSwapHelper = new FileSwapHelper();
 //            blurRunnable = new BlurRunnable();
-//            new Thread(blurRunnable).start();
+//            new Thread(blurRunnable).readyStart();
 //        }
 //
 //        public void exit() {

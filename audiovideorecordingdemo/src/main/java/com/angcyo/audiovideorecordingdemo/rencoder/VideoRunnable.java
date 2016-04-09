@@ -17,6 +17,8 @@ import java.util.Vector;
  * Created by robi on 2016-04-01 10:50.
  */
 public class VideoRunnable extends Thread {
+    public static boolean DEBUG = false;
+
     private static final String TAG = "VideoRunnable";
     private static final boolean VERBOSE = false; // lots of logging
     // parameters for the encoder
@@ -61,7 +63,7 @@ public class VideoRunnable extends Thread {
                 return colorFormat;
             }
         }
-        Log.e(TAG,
+        if(DEBUG) Log.e(TAG,
                 "couldn't find a good color format for " + codecInfo.getName()
                         + " / " + mimeType);
         return 0; // not reached
@@ -118,19 +120,19 @@ public class VideoRunnable extends Thread {
     }
 
     private void prepare() {
-        Log.i(TAG, "VideoEncoder()");
+        if(DEBUG) Log.i(TAG, "VideoEncoder()");
         mFrameData = new byte[this.mWidth * this.mHeight * 3 / 2];
         mBufferInfo = new MediaCodec.BufferInfo();
         codecInfo = selectCodec(MIME_TYPE);
         if (codecInfo == null) {
-            Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
+            if(DEBUG) Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
             return;
         }
         if (VERBOSE)
-            Log.d(TAG, "found codec: " + codecInfo.getName());
+            if(DEBUG) Log.d(TAG, "found codec: " + codecInfo.getName());
         mColorFormat = selectColorFormat(codecInfo, MIME_TYPE);
         if (VERBOSE)
-            Log.d(TAG, "found colorFormat: " + mColorFormat);
+            if(DEBUG) Log.d(TAG, "found colorFormat: " + mColorFormat);
         mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE,
                 this.mWidth, this.mHeight);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
@@ -138,7 +140,7 @@ public class VideoRunnable extends Thread {
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
         if (VERBOSE)
-            Log.d(TAG, "format: " + mediaFormat);
+            if(DEBUG) Log.d(TAG, "format: " + mediaFormat);
     }
 
     private void startMediaCodec() throws IOException {
@@ -157,7 +159,7 @@ public class VideoRunnable extends Thread {
             mMediaCodec = null;
         }
         isStart = false;
-        Log.e("angcyo-->", "stop video 录制...");
+        if(DEBUG) Log.e("angcyo-->", "stop video 录制...");
     }
 
     public synchronized void restart() {
@@ -175,19 +177,19 @@ public class VideoRunnable extends Thread {
 
     private void encodeFrame(byte[] input/* , byte[] output */) {
         if (VERBOSE)
-            Log.i(TAG, "encodeFrame()");
+            if(DEBUG) Log.i(TAG, "encodeFrame()");
         NV21toI420SemiPlanar(input, mFrameData, this.mWidth, this.mHeight);
 
         ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
         ByteBuffer[] outputBuffers = mMediaCodec.getOutputBuffers();
         int inputBufferIndex = mMediaCodec.dequeueInputBuffer(TIMEOUT_USEC);
         if (VERBOSE)
-            Log.i(TAG, "inputBufferIndex-->" + inputBufferIndex);
+            if(DEBUG) Log.i(TAG, "inputBufferIndex-->" + inputBufferIndex);
         if (inputBufferIndex >= 0) {
             long endTime = System.nanoTime();
             long ptsUsec = (endTime - mStartTime) / 1000;
             if (VERBOSE)
-                Log.i(TAG, "resentationTime: " + ptsUsec);
+                if(DEBUG) Log.i(TAG, "resentationTime: " + ptsUsec);
             ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
             inputBuffer.clear();
             inputBuffer.put(mFrameData);
@@ -196,12 +198,12 @@ public class VideoRunnable extends Thread {
         } else {
             // either all in use, or we timed out during initial setup
             if (VERBOSE)
-                Log.d(TAG, "input buffer not available");
+                if(DEBUG) Log.d(TAG, "input buffer not available");
         }
 
         int outputBufferIndex = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
         if (VERBOSE)
-            Log.i(TAG, "outputBufferIndex-->" + outputBufferIndex);
+            if(DEBUG) Log.i(TAG, "outputBufferIndex-->" + outputBufferIndex);
         do {
             if (outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
             } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
@@ -213,11 +215,11 @@ public class VideoRunnable extends Thread {
                     mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_VIDEO, newFormat);
                 }
 
-                Log.e("angcyo-->", "添加视轨 INFO_OUTPUT_FORMAT_CHANGED " + newFormat.toString());
+                if(DEBUG) Log.e("angcyo-->", "添加视轨 INFO_OUTPUT_FORMAT_CHANGED " + newFormat.toString());
             } else if (outputBufferIndex < 0) {
             } else {
                 if (VERBOSE)
-                    Log.d(TAG, "perform encoding");
+                    if(DEBUG) Log.d(TAG, "perform encoding");
                 ByteBuffer outputBuffer = outputBuffers[outputBufferIndex];
                 if (outputBuffer == null) {
                     throw new RuntimeException("encoderOutputBuffer " + outputBufferIndex +
@@ -226,7 +228,7 @@ public class VideoRunnable extends Thread {
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                     // The codec config data was pulled out and fed to the muxer when we got
                     // the INFO_OUTPUT_FORMAT_CHANGED status.  Ignore it.
-                    if (VERBOSE) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
+                    if (VERBOSE) if(DEBUG) Log.d(TAG, "ignoring BUFFER_FLAG_CODEC_CONFIG");
                     mBufferInfo.size = 0;
                 }
                 if (mBufferInfo.size != 0) {
@@ -234,7 +236,7 @@ public class VideoRunnable extends Thread {
 
                     if (mediaMuxerRunnable != null && !mediaMuxerRunnable.isVideoAdd()) {
                         MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                        Log.e("angcyo-->", "添加视轨  " + newFormat.toString());
+                        if(DEBUG) Log.e("angcyo-->", "添加视轨  " + newFormat.toString());
                         mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_VIDEO, newFormat);
                     }
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
@@ -247,7 +249,7 @@ public class VideoRunnable extends Thread {
                         ));
                     }
                     if (VERBOSE) {
-                        Log.d(TAG, "sent " + mBufferInfo.size + " frameBytes to muxer");
+                        if(DEBUG) Log.d(TAG, "sent " + mBufferInfo.size + " frameBytes to muxer");
                     }
                 }
                 mMediaCodec.releaseOutputBuffer(outputBufferIndex, false);
@@ -265,7 +267,7 @@ public class VideoRunnable extends Thread {
                 if (!isMuxerReady) {
                     synchronized (lock) {
                         try {
-                            Log.e("ang-->", "video -- 等待混合器准备...");
+                            if(DEBUG) Log.e("ang-->", "video -- 等待混合器准备...");
                             lock.wait();
                         } catch (InterruptedException e) {
                         }
@@ -274,7 +276,7 @@ public class VideoRunnable extends Thread {
 
                 if (isMuxerReady) {
                     try {
-                        Log.e("angcyo-->", "video -- startMediaCodec...");
+                        if(DEBUG) Log.e("angcyo-->", "video -- startMediaCodec...");
                         startMediaCodec();
                     } catch (IOException e) {
                         isStart = false;
@@ -287,16 +289,16 @@ public class VideoRunnable extends Thread {
 
             } else if (!frameBytes.isEmpty()) {
                 byte[] bytes = this.frameBytes.remove(0);
-//                Log.e("ang-->", "解码视频数据:" + bytes.length);
+//                if(DEBUG) Log.e("ang-->", "解码视频数据:" + bytes.length);
                 try {
                     encodeFrame(bytes);
                 } catch (Exception e) {
-                    Log.e("angcyo-->", "解码视频(Video)数据 失败");
+                    if(DEBUG) Log.e("angcyo-->", "解码视频(Video)数据 失败");
                     e.printStackTrace();
                 }
             }
         }
 
-        Log.e("angcyo-->", "Video 录制线程 退出...");
+        if(DEBUG) Log.e("angcyo-->", "Video 录制线程 退出...");
     }
 }

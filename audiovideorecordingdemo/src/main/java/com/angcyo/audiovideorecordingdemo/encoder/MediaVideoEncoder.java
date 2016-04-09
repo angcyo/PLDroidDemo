@@ -134,7 +134,7 @@ public class MediaVideoEncoder extends MediaEncoder {
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         // get Surface for encoder input
-        // this method only can call between #configure and #start
+        // this method only can call between #configure and #readyStart
 //        mSurface = mMediaCodec.createInputSurface();	// API >= 18
         mMediaCodec.start();
         if (DEBUG) Log.i(TAG, "prepare finishing");
