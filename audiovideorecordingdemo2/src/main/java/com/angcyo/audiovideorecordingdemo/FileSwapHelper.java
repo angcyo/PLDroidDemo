@@ -70,17 +70,6 @@ public class FileSwapHelper {
         return nextFileName;
     }
 
-    public String getTempFileName() {
-        StringBuilder fullPath = new StringBuilder();
-        fullPath.append(FileUtils.T_FLASH_PATH);
-        fullPath.append(FileUtils.getMainDirName());
-        fullPath.append(BASE_VIDEO);
-        fullPath.append(new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(System.currentTimeMillis()));
-        fullPath.append(BASE_EXT);
-
-        return fullPath.toString();
-    }
-
     private String getFileName() {
         String format = simpleDateFormat.format(System.currentTimeMillis());
         return format;

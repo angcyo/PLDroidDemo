@@ -1,5 +1,6 @@
 package com.angcyo.audiovideorecordingdemo;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -21,6 +23,7 @@ import java.io.FileNotFoundException;
 public class MainActivity extends AppCompatActivity implements CameraWrapper.CamOpenOverCallback {
 
     CameraTexturePreview mCameraTexturePreview;
+    public static final String TAG = "MainActivity";
 
     /**
      * 创建缩略图
@@ -39,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements CameraWrapper.Cam
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e(TAG, "onCreate");
 
         CrashHandler crashHandler = CrashHandler.getInstance();
 
@@ -91,6 +95,15 @@ public class MainActivity extends AppCompatActivity implements CameraWrapper.Cam
             }
         });
 
+        findViewById(R.id.startActivity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, Main2Activity.class);
+                startActivity(intent);
+            }
+        });
+
+        openCamera();
     }
 
     @Override
@@ -112,8 +125,8 @@ public class MainActivity extends AppCompatActivity implements CameraWrapper.Cam
                 Bitmap videoThumbnail2 = ThumbnailUtils.createVideoThumbnail("/storage/sdcard1/dudu/video4/2016_04_09_14_41.mp4", MediaStore.Video.Thumbnails.MICRO_KIND);
 
                 try {
-                    FileUtils.saveBitmap(videoThumbnail, FileUtils.getPhotoSaveFilePath("MINI_KIND"));//缩略图大小 512 x 384
-                    FileUtils.saveBitmap(videoThumbnail2, FileUtils.getPhotoSaveFilePath("MICRO_KIND"));//缩略图大小 96 x 96
+                    FileUtils.saveBitmap(videoThumbnail, FileUtils.getPhotoSaveFilePath("MINI_KIND"));
+                    FileUtils.saveBitmap(videoThumbnail2, FileUtils.getPhotoSaveFilePath("MICRO_KIND"));
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -163,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements CameraWrapper.Cam
     protected void onStart() {
         super.onStart();
 
-        openCamera();
+        Log.e(TAG, "onStart");
     }
 
     private void openCamera() {

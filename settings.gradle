@@ -1,4 +1,4 @@
-include ':app', ':drivevideo', ':yuvtorbga', ':driveblurdemo', ':AudioVideoRecordingSample', ':audiovideorecordingdemo', ':MediaRecorderSample', ':blur-behind'
+include ':app', ':drivevideo', ':yuvtorbga', ':driveblurdemo', ':AudioVideoRecordingSample', ':audiovideorecordingdemo', ':MediaRecorderSample', ':blur-behind', ':audiovideorecordingdemo2'
 //include ':spydroid'':gpuimage-library',
 include ':androidH264StreamDemo'
 include ':h264MediaCodecStreamer'

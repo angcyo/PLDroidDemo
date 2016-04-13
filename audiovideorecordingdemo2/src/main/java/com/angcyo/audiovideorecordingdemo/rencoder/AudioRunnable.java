@@ -44,6 +44,7 @@ public class AudioRunnable extends Thread {
     private MediaCodec.BufferInfo mBufferInfo;        // API >= 16(Android4.1.2)
     private MediaCodecInfo audioCodecInfo;
     private volatile boolean isStart = false;
+    private volatile boolean isMuxerReady = false;
     /**
      * previous presentationTimeUs for writing
      */
@@ -137,6 +138,7 @@ public class AudioRunnable extends Thread {
 
     public synchronized void restart() {
         isStart = false;
+        isMuxerReady = false;
     }
 
     private void prepareAudioRecord() {
@@ -178,20 +180,50 @@ public class AudioRunnable extends Thread {
         isExit = true;
     }
 
+    public void setMuxerReady(boolean muxerReady) {
+        synchronized (lock) {
+            if (DEBUG)
+                Log.e("angcyo-->", Thread.currentThread().getId() + " audio -- setMuxerReady..." + muxerReady);
+            isMuxerReady = muxerReady;
+            lock.notifyAll();
+        }
+    }
+
     @Override
     public void run() {
         final ByteBuffer buf = ByteBuffer.allocateDirect(SAMPLES_PER_FRAME);
         int readBytes;
         while (!isExit) {
+
             /*启动或者重启*/
             if (!isStart) {
                 stopMediaCodec();
-                try {
-                    if (DEBUG) Log.e("angcyo-->", "audio -- startMediaCodec...");
-                    startMediaCodec();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    isStart = false;
+
+                if (DEBUG)
+                    Log.e("angcyo-->", Thread.currentThread().getId() + " audio -- run..." + isMuxerReady);
+
+                if (!isMuxerReady) {
+                    synchronized (lock) {
+                        try {
+                            if (DEBUG) Log.e("ang-->", "audio -- 等待混合器准备...");
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                }
+
+                if (isMuxerReady) {
+                    try {
+                        if (DEBUG) Log.e("angcyo-->", "audio -- startMediaCodec...");
+                        startMediaCodec();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        isStart = false;
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e1) {
+                        }
+                    }
                 }
             } else if (audioRecord != null) {
                 buf.clear();
@@ -209,6 +241,7 @@ public class AudioRunnable extends Thread {
                     }
                 }
             }
+
             /**/
         }
         if (DEBUG) Log.e("angcyo-->", "Audio 录制线程 退出...");
@@ -263,8 +296,7 @@ public class AudioRunnable extends Thread {
                 if (mediaMuxerRunnable != null) {
                     if (DEBUG)
                         Log.e("angcyo-->", "添加音轨 INFO_OUTPUT_FORMAT_CHANGED " + format.toString());
-//                    mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_AUDIO, format);
-                    mediaMuxerRunnable.setMediaFormat(MediaMuxerRunnable.TRACK_AUDIO, format);
+                    mediaMuxerRunnable.addTrackIndex(MediaMuxerRunnable.TRACK_AUDIO, format);
                 }
 
             } else if (encoderStatus < 0) {
@@ -279,9 +311,9 @@ public class AudioRunnable extends Thread {
                     mBufferInfo.size = 0;
                 }
 
-                if (mBufferInfo.size != 0 && muxer != null) {
+                if (mBufferInfo.size != 0 && muxer != null && muxer.isMuxerStart()) {
                     mBufferInfo.presentationTimeUs = getPTSUs();
-                    if(DEBUG) Log.e("angcyo-->", "添加音频数据 " + mBufferInfo.size);
+//                    if(DEBUG) Log.e("angcyo-->", "发送音频数据 " + mBufferInfo.size);
                     muxer.addMuxerData(new MediaMuxerRunnable.MuxerData(
                             MediaMuxerRunnable.TRACK_AUDIO, encodedData, mBufferInfo));
                     prevOutputPTSUs = mBufferInfo.presentationTimeUs;
